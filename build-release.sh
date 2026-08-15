@@ -7,7 +7,9 @@ rm dist/main.js
 
 echo "Compiling..."
 sbt fullLinkJS
-mv target/scala-3.8.3/webgl-opt/main.js dist/
+
+echo "Minifying..."
+terser target/scala-3.8.3/webgl-opt/main.js --mangle toplevel=true --output dist/main.js
 
 echo "Copying assets..."
 cp -R src/assets dist/
