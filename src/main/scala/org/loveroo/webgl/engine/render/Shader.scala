@@ -1,6 +1,6 @@
 package org.loveroo.webgl.engine.render
 
-import java.util.{ArrayList, HashMap, LinkedList}
+import java.util.{ArrayList, HashMap, HashSet, LinkedList}
 import org.loveroo.webgl.Game
 import org.loveroo.webgl.engine.data.resource.{Resource, ResourceLoader}
 import org.loveroo.webgl.engine.render.data.TextureSlot
@@ -73,7 +73,7 @@ class Shader(
                 loaded += 1
 
                 if(loaded >= total) {
-                    val replaced = new ArrayList[String](total - 1)
+                    val replaced = new HashSet[String](total - 1)
 
                     def replaceIncludes(str: String): String = {
                         Shader.includeRegex.replaceAllIn(str, m => {

@@ -41,7 +41,7 @@ class ResourceLoader {
 }
 
 object ResourceLoader {
-    val root = s"${Game.runtime.isDebug.evaluate("src/", "")}assets"
+    val root = s"${Game.runtime.isDebug.evaluate("src/assets", "assets")}"
 
     val shaderPath = s"${root}/shader"
     val texturePath = s"${root}/texture"

@@ -19,7 +19,7 @@ class ChunkRenderer(private val chunkMap: ChunkMap) {
     val blockShader = new Shader("chunk/block")
     val blockNormalShader = new Shader("chunk/block")
     val blockPositionShader = new Shader("chunk/block_pos")
-    val blockDepthShader = new Shader("/chunk/block_depth")
+    val blockDepthShader = new Shader("chunk/block_depth")
 
     // TODO: hot swap shaders update attrib loc
     private val blockBatch = new Batch[BlockElement](
@@ -46,19 +46,42 @@ class ChunkRenderer(private val chunkMap: ChunkMap) {
     blockNormalShader.setUniform("blockSize", new FloatUniform(Chunk.blockPixelSize))
     blockPositionShader.setUniform("blockSize", new FloatUniform(Chunk.blockPixelSize))
 
-    ChunkRenderer.blockAtlas.onLoad = t =>
+    ChunkRenderer.blockAtlas.onLoad(t =>
         blockShader.setUniform("tex", new TextureUniform(TextureSlot.One, t))
+    )
 
-    ChunkRenderer.normalAtlas.onLoad = t =>
+    ChunkRenderer.normalAtlas.onLoad(t =>
         blockNormalShader.setUniform("tex", new TextureUniform(TextureSlot.One, t))
+    )
 
-    ChunkRenderer.posAtlas.onLoad = t =>
+    ChunkRenderer.posAtlas.onLoad(t =>
         blockPositionShader.setUniform("tex", new TextureUniform(TextureSlot.One, t))
+    )
 
-    ChunkRenderer.depthAtlas.onLoad = t =>
+    ChunkRenderer.depthAtlas.onLoad(t =>
         blockDepthShader.setUniform("tex", new TextureUniform(TextureSlot.One, t))
+    )
 
     def regenerateBatch(): Unit = {
+        if(blockAtlas.loaded && depthAtlas.loaded) {
+            _regenerateBatch()
+            return
+        }
+
+        blockAtlas.onLoad(_ => {
+            if(depthAtlas.loaded) {
+                _regenerateBatch()
+            }
+        })
+
+        depthAtlas.onLoad(_ => {
+            if(blockAtlas.loaded) {
+                _regenerateBatch()
+            }
+        })
+    }
+
+    private def _regenerateBatch(): Unit = {
         val blockElements = new ArrayList[BlockElement](
             (ChunkMap.distance * ChunkMap.distance) *
             (Chunk.chunkSizeX * Chunk.chunkSizeY * Chunk.chunkSizeZ)
@@ -225,7 +248,7 @@ class DepthElement(
         list.add(new FloatElementData(zIndex))
 
         blockTypes.forEach(t => {
-            val atlas = ChunkRenderer.blockAtlas.infoFor(t.id)
+            val atlas = ChunkRenderer.depthAtlas.infoFor(t.id)
             list.add(new Vec2ElementData(atlas.u1, atlas.v1))
         })
 
@@ -282,6 +305,6 @@ object ChunkRenderer {
         atlasSize.y / blockPixelSize
     )
 
-    protected val depthShader = new Shader("chunk/block_depth", "chunk/block_depth")
+    protected val depthShader = new Shader("chunk/block_depth")
     depthShader.setUniform("blockSize", new FloatUniform(blockPixelSize))
 }

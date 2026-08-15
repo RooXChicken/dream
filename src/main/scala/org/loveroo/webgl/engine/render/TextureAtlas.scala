@@ -1,6 +1,6 @@
 package org.loveroo.webgl.engine.render
 
-import java.util.{HashMap, List}
+import java.util.{HashMap, List, Map}
 import org.loveroo.webgl.Game
 import org.loveroo.webgl.engine.math.{Vec2i, Vec3f}
 import org.loveroo.webgl.engine.render.data.TextureSlot
@@ -57,17 +57,19 @@ class TextureAtlas(
             val image = new ImageTexture(s"${path}/${id.file}")
             textures.put(id.id, image)
 
-            image.onLoad = _ => {
+            image.onLoad(i => {
                 loaded += 1
 
                 if(loaded >= elements.size()) {
-                    shader.onLoad = _ => onTextureLoadComplete(textures)
+                    shader.onLoad(_ => {
+                        onTextureLoadComplete(textures)
+                    })
                 }
-            }
+            })
         })
     }
 
-    private def onTextureLoadComplete(textures: HashMap[String, Texture]): Unit = {
+    private def onTextureLoadComplete(textures: Map[String, Texture]): Unit = {
         Game.runtime.debugLog(s"Stitching atlas ${id} with ${textures.size()} elements")
 
         bindBuffer()

@@ -9,24 +9,25 @@ trait Resource[R <: Resource[?]] extends Destroyable {
     private var _loaded = false
     def loaded: Boolean = _loaded
 
-    private var _onLoad: R => Unit = _ => {}
+    private val onLoads = new LinkedList[R => Unit]()
 
-    def onLoad: R => Unit = _onLoad
-    def onLoad_=(value: R => Unit): Unit = {
-        _onLoad = value
-
-        if(loaded) {
-            _onLoad(this.as[R])
+    def onLoad(value: R => Unit): Unit = {
+        if(!loaded) {
+            onLoads.addLast(value)
+        }
+        else {
+            value(this.as[R])
         }
     }
 
     protected def postCreate(): Unit = {
         _loaded = true
 
+        onLoads.forEach(_(this.as[R]))
+        onLoads.clear()
+
         buffered.forEach(_())
         buffered.clear()
-
-        _onLoad(this.as[R])
     }
 
     protected def create(): Unit

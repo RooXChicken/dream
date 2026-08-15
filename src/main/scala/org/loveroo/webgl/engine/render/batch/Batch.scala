@@ -17,7 +17,7 @@ class Batch[E <: BatchElement](
     private var _count = 0
     def count: Int = _count
 
-    shader.onLoad = _ => create()
+    shader.onLoad(_ => create())
 
     override protected def create(): Unit = {
         Game.runtime.newCommand(c => {
@@ -66,6 +66,7 @@ class Batch[E <: BatchElement](
 
     override def destroy(): Unit = {
         shader.destroy()
+
         Game.runtime.newCommand(c => {
             c.command = Command.DestroyBatch
             c.write(this)

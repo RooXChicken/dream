@@ -102,6 +102,4 @@ object ChunkMap {
         (Chunk.blockDepthPixelSize * Chunk.chunkSizeX * ChunkMap.distance * ChunkMap.distance * Chunk.depthColumnsPerChunk),
         (Chunk.blockDepthPixelSize * Chunk.chunkSizeY)
     )
-
-    println(depthMapSize)
 }

@@ -49,9 +49,9 @@ class World extends Scene {
         new Shader("sprite_raw", "world/world_lighting")
     )
 
-    worldSprite.onLoad = _ => {
+    worldSprite.onLoad(_ => {
         worldSprite.scale = worldSprite.scale.mul(2.0f)
-    }
+    })
 
     worldSprite.shader.setUniform("worldSize", new Uniform3f(
         Chunk.chunkSizeX * ChunkMap.distance * Chunk.blockDepthPixelSize,
