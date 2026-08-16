@@ -6,24 +6,25 @@ attribute vec2 blockUV;
 uniform vec4 camera;
 
 uniform mediump vec2 frameSize;
-uniform mediump float blockSize;
 
 varying highp vec2 uv;
 varying highp vec3 _blockPos;
 
-#include "const.glsl"
+#const "depthDiv"
+#const "blockPixelSize"
+
 #include "block_util.glsl"
 #include "util.glsl"
 
 void main() {
     _blockPos = blockPos;
 
-    uv = correctUV(vertexUV, blockUV, blockSize);
-    vec3 blockWorldPos = toWorldPos(blockPos, blockSize);
+    uv = correctUV(vertexUV, blockUV);
+    vec3 blockWorldPos = toWorldPos(blockPos);
 
     gl_Position = vec4(
-        ((vertexUV * blockSize) + blockWorldPos.xy - camera.xy) / camera.zw,
-        (blockWorldPos.z) / const_depthDiv,
+        ((vertexUV * blockPixelSize) + blockWorldPos.xy - camera.xy) / camera.zw,
+        (blockWorldPos.z) / depthDiv,
         1.0
     );
 }

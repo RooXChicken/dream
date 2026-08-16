@@ -1,10 +1,12 @@
 package org.loveroo.webgl.engine.render
 
-import java.util.List
+import java.util.{HashMap, List}
 import org.loveroo.webgl.Game
 import org.loveroo.webgl.engine.render.batch.{Batch, BatchElement}
 import org.loveroo.webgl.engine.render.data.{ColorFormats, TextureSlot, TextureTypes}
 import org.loveroo.webgl.engine.render.frame.command.{Command, DepthTestCommand}
+import org.loveroo.webgl.game.world.{Chunk, ChunkMap}
+import scala.util.matching.Regex
 
 trait Renderer {
     val textureTypes: TextureTypes
@@ -24,7 +26,7 @@ trait Renderer {
     def createShader(shader: Shader): Unit
     def destroyShader(shader: Shader): Unit
 
-    def bindShader(shader: Shader): Unit
+    def bindShader(shader: Shader, init: Boolean): Unit
     def setShaderUniform(shader: Shader, id: String, value: UniformValue): Unit
     def setShaderUniformGlobal(id: String, value: UniformValue): Unit
 
@@ -60,6 +62,27 @@ object Renderer {
 
     def width: Int = _width
     def height: Int = _height
+
+    val constantsRegex = new Regex("#const \"(.+)\"")
+    val constants = new HashMap[String, UniformValue]()
+
+    constants.put("chunkXSize", new FloatUniform(Chunk.chunkSizeX))
+    constants.put("chunkZSize", new FloatUniform(Chunk.chunkSizeZ))
+
+    constants.put("atlasRowAmount", new FloatUniform(16.0f))
+
+    constants.put("blockSize", new FloatUniform(Chunk.blockSize))
+    constants.put("blockPixelSize", new FloatUniform(Chunk.blockPixelSize))
+    constants.put("blockDepthPixelSize", new FloatUniform(Chunk.blockDepthPixelSize))
+
+    constants.put("distance", new FloatUniform(ChunkMap.distance))
+    constants.put("depthDiv", new FloatUniform(63553.0f))
+
+    constants.put("worldSize", new Uniform3f(
+        Chunk.chunkSizeX * ChunkMap.distance * Chunk.blockDepthPixelSize,
+        Chunk.chunkSizeY * Chunk.blockDepthPixelSize,
+        Chunk.chunkSizeZ * ChunkMap.distance * Chunk.blockDepthPixelSize
+    ))
 
     def initRenderer(renderer: Renderer, width: Int, height: Int): Unit = {
         _textureTypes = renderer.textureTypes

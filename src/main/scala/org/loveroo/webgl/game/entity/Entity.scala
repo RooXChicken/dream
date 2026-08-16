@@ -130,16 +130,10 @@ trait Entity(
     }
 
     private def blendPos(delta: Double): Vec3f = {
-        val worldPos = Entity.xyzToWorld(
+        Entity.xyzToWorld(
             Lerp.lerp(delta, previousPos.x, pos.x, order = false).toFloat,
             Lerp.lerp(delta, previousPos.y, pos.y, order = false).toFloat,
             Lerp.lerp(delta, previousPos.z, pos.z, order = false).toFloat
-        )
-
-        new Vec3f(
-            worldPos.x,
-            worldPos.y,
-            -pos.y - pos.z
         )
     }
 
@@ -158,12 +152,13 @@ trait Entity(
 }
 
 object Entity {
-    def xyzToWorld(x: Float, y: Float, z: Float): Vec2f = {
+    def xyzToWorld(x: Float, y: Float, z: Float): Vec3f = {
         val blockPos = Chunk.xyzToWorld(x, y, z)
 
-        new Vec2f(
+        new Vec3f(
             blockPos.x,
-            blockPos.y + 32
+            blockPos.y + 32,
+            -y - z
         )
     }
 }

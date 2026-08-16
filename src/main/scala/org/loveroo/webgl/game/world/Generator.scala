@@ -21,7 +21,7 @@ class TestGenerator extends Generator {
             val height = Noise.noise(
                 (x + (chunkX * Chunk.chunkSizeX)) / 10.0,
                 (z + (chunkZ * Chunk.chunkSizeZ)) / 10.0
-            ) * 6 + 70
+            ) * 30 + 70
 
             var y = 0
             while(y < height) {

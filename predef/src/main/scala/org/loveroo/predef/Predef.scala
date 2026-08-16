@@ -30,12 +30,6 @@ object Predef {
 
     class Null extends scala.annotation.Annotation {}
 
-    extension [K, V](map: HashMap[K, V]) {
-        @Null
-        inline def getv(key: K): V =
-            map.getOrElse(key, null.as[V])
-    }
-
     extension [T](list: java.util.List[T]) {
         def random: T = {
             list.get((list.size() * Math.random()).toInt)
@@ -87,7 +81,7 @@ object Predef {
             any.asInstanceOf[T]
         }
 
-        def ?(default: => A): A = {
+        inline def ?(default: => A): A = {
             if(any == null) {
                 default
             }
@@ -96,7 +90,7 @@ object Predef {
             }
         }
 
-        def ??[R](func: A => R): R = {
+        inline def ??[R](func: A => R): R = {
             if(any == null) {
                 null.as[R]
             }

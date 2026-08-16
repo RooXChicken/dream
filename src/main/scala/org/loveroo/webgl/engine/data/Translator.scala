@@ -1,8 +1,8 @@
 package org.loveroo.webgl.engine.data
 
+import java.util.HashMap
 import org.loveroo.webgl.Game
 import org.loveroo.webgl.engine.data.resource.ResourceLoader
-import scala.collection.mutable.HashMap
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 import scala.scalajs.js.Object.create
@@ -11,7 +11,7 @@ class Translator {
     private var loadedText = new HashMap[String, String]()
 
     def translate(key: String): String =
-        loadedText.getv(key) ? key
+        loadedText.get(key) ? key
 
     def loadLanguage(lang: String): Unit = {
         Game.resourceLoader.loadStr(

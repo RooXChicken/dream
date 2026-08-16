@@ -6,6 +6,7 @@ import org.loveroo.webgl.engine.math.Vec2i
 import org.loveroo.webgl.engine.render.Texture
 import org.loveroo.webgl.game.world.ChunkMap.distance
 import scala.collection.mutable.{ArrayBuffer, Buffer, ListBuffer}
+import scala.scalajs.js.Math
 
 class ChunkMap extends Destroyable {
     private val chunks: List[Chunk] = {
@@ -28,15 +29,29 @@ class ChunkMap extends Destroyable {
     def init(): Unit = {
         val generator = new TestGenerator()
 
-        var x = 0
-        while(x < distance) {
-            var z = 0
-            while(z < distance) {
-                chunks.set(chunkIndex(x, z), new Chunk(x, z, generator))
-                z += 1
+        val radius = 8.0
+        val halfDist = (distance / 2.0)
+
+        var x = -halfDist
+        while(x < halfDist) {
+            val xDist = (x * x)
+
+            var z = -halfDist
+            while(z < halfDist) {
+                val zDist = (z * z)
+                if(xDist + zDist <= radius) {
+                    val xPos = (x + halfDist).toInt
+                    val zPos = (z + halfDist).toInt
+
+                    if(chunks.get(chunkIndex(xPos, zPos)) == null) {
+                        chunks.set(chunkIndex(xPos, zPos), new Chunk(xPos, zPos, generator))
+                    }
+                }
+
+                z += 0.1
             }
 
-            x += 1
+            x += 0.1
         }
 
         renderer.regenerateBatch()

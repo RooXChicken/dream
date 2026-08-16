@@ -22,14 +22,12 @@ class Camera(
     }
 
     def lerp(delta: Double): Unit = {
-        val blend = new Vec2f(
-            Lerp.lerp(delta, previousPos.x, pos.x, order = false).toFloat,
-            Lerp.lerp(delta, previousPos.y, pos.y, order = false).toFloat
-        )
+        val blendX = Lerp.lerp(delta, previousPos.x, pos.x, order = false)
+        val blendY = Lerp.lerp(delta, previousPos.y, pos.y, order = false)
 
         Renderer.setUniformGlobal("camera", new Uniform4f(
-            Math.round(blend.x).toFloat,
-            Math.round(blend.y).toFloat,
+            Math.round(blendX).toFloat,
+            Math.round(blendY).toFloat,
             (Camera.sizeX / 2.0f) / zoom,
             (Camera.sizeY / 2.0f) / zoom
         ))

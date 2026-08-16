@@ -42,10 +42,6 @@ class ChunkRenderer(private val chunkMap: ChunkMap) {
         ))
     )
 
-    blockShader.setUniform("blockSize", new FloatUniform(Chunk.blockPixelSize))
-    blockNormalShader.setUniform("blockSize", new FloatUniform(Chunk.blockPixelSize))
-    blockPositionShader.setUniform("blockSize", new FloatUniform(Chunk.blockPixelSize))
-
     ChunkRenderer.blockAtlas.onLoad(t =>
         blockShader.setUniform("tex", new TextureUniform(TextureSlot.One, t))
     )

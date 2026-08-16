@@ -1,6 +1,8 @@
 package org.loveroo.webgl.engine.render.data
 
-class TextureSlot private (val id: Int)
+class TextureSlot private (val id: Int) {
+    override def hashCode(): Int = id
+}
 
 object TextureSlot {
     val None = new TextureSlot(-1)

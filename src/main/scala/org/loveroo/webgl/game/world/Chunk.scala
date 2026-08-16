@@ -69,6 +69,7 @@ class Chunk(val chunkX: Int, val chunkZ: Int, generator: Generator) extends Dest
 }
 
 object Chunk {
+    val blockSize = 8
     val blockPixelSize = 16
     val blockDepthPixelSize = 8
 
@@ -81,11 +82,6 @@ object Chunk {
     val maxDepthColumnPixelCount = 32
     val blocksPerDepthColumn: Int = (maxDepthColumnPixelCount / blockDepthPixelSize)
     val depthColumnsPerChunk: Int = (chunkSizeZ / blocksPerDepthColumn)
-
-//    val chunkTextureSize = new Vec2i(
-//        ((chunkSizeX * (blockSize / 2)) + (chunkSizeZ * (blockSize / 2))),
-//        ((chunkSizeX * (blockSize / 4)) + (chunkSizeY * (blockSize / 2)) + (chunkSizeZ * (blockSize / 4)))
-//    )
 
     def xyzToIndex(x: Int, y: Int, z: Int): Int = {
         ((x % chunkSizeX) * chunkSizeY * chunkSizeZ) + ((y % chunkSizeY) * chunkSizeZ) + (z % chunkSizeZ)

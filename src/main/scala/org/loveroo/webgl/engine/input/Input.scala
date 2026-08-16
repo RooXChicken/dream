@@ -10,10 +10,12 @@ trait Input {
 
     def buttonStrength(button: Button): Float
 
-    def getCombinedAxis(vertical: Axis, horizontal: Axis): Vec2f = new Vec2f(
-        getAxis(horizontal),
-        getAxis(vertical)
-    )
+    def getCombinedAxis(vertical: Axis, horizontal: Axis, out: Vec2f = new Vec2f()): Vec2f = {
+        out.x = getAxis(horizontal)
+        out.y = getAxis(vertical)
+
+        out
+    }
 
     def getAxis(axis: Axis): Float =
         buttonStrength(axis.pos) + (buttonStrength(axis.neg) * -1)

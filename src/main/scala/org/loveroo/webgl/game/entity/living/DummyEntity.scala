@@ -17,19 +17,21 @@ class DummyEntity(_pos: Vec3f, world: World) extends
         new Shader("sprite")
     )
 
+    private val input = new Vec2f()
+    private val movement = new Vec2f()
+
     override def move(): Unit = {
         // rotate movement
-        val movement = {
-            val input = Game.input.getCombinedAxis(Axis.leftVertical, Axis.leftHorizontal)
+        Game.input.getCombinedAxis(Axis.leftVertical, Axis.leftHorizontal, input)
 
-            if(input.x != 0.0f || input.y != 0.0f) {
-                val angle = Math.atan2(-input.y, input.x) + (Math.PI / 4.0)
+        if(input.x != 0.0f || input.y != 0.0f) {
+            val angle = Math.atan2(-input.y, input.x) + (Math.PI / 4.0)
 
-                new Vec2f(Math.cos(angle).toFloat, Math.sin(angle).toFloat)
-            }
-            else {
-                input
-            }
+            movement.x = Math.cos(angle).toFloat
+            movement.y = Math.sin(angle).toFloat
+        }
+        else {
+            movement.set(input)
         }
 
         vel.x = NumberMove.moveTowardCapped(
@@ -49,8 +51,13 @@ class DummyEntity(_pos: Vec3f, world: World) extends
         }
 
         vel.y -= gravity
+    }
 
-        Game.runtime.camera.pos = Entity.xyzToWorld(pos.x, pos.y, pos.z)
+    override def tick(): Unit = {
+        super.tick()
+
+        val cameraPos = Entity.xyzToWorld(pos.x, pos.y, pos.z)
+        Game.runtime.camera.pos = new Vec2f(cameraPos.x, cameraPos.y)
     }
 
     def acceleration: Float = (0.8f / 60.0f)

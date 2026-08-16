@@ -10,7 +10,7 @@ import org.loveroo.webgl.engine.render.frame.command.GPUCommand
 import scala.Exception
 
 trait EngineRuntime {
-    def isDebug: Boolean = true
+    def isDebug: Boolean = false
 
     def crashOrLog(ex: Exception): Unit = {
         if(isDebug) {

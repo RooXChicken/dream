@@ -17,7 +17,7 @@ class DestroyShaderCommand extends Command {
 
 class BindShaderCommand extends Command {
     override def execute(data: List[Values], renderer: Renderer): Unit = {
-        renderer.bindShader(data.get(0).as[Shader])
+        renderer.bindShader(data.get(0).as[Shader], true)
     }
 }
 

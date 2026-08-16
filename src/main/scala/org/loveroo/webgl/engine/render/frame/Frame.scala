@@ -1,6 +1,7 @@
 package org.loveroo.webgl.engine.render.frame
 
 import java.util.{ArrayList, LinkedList, List}
+import org.loveroo.webgl.Game
 import org.loveroo.webgl.engine.render.Renderer
 import org.loveroo.webgl.engine.render.frame.command.{Command, GPUCommand}
 import org.loveroo.webgl.engine.render.frame.command.GPUCommand

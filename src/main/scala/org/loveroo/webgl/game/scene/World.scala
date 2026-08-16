@@ -53,12 +53,6 @@ class World extends Scene {
         worldSprite.scale = worldSprite.scale.mul(2.0f)
     })
 
-    worldSprite.shader.setUniform("worldSize", new Uniform3f(
-        Chunk.chunkSizeX * ChunkMap.distance * Chunk.blockDepthPixelSize,
-        Chunk.chunkSizeY * Chunk.blockDepthPixelSize,
-        Chunk.chunkSizeZ * ChunkMap.distance * Chunk.blockDepthPixelSize
-    ))
-
     worldSprite.shader.setUniform("normalTex", new TextureUniform(TextureSlot.Two, worldNormalBuffer))
     worldSprite.shader.setUniform("posTex", new TextureUniform(TextureSlot.Three, worldPositionBuffer))
 
@@ -89,28 +83,13 @@ class World extends Scene {
         super.init()
 
 //        spawnEntity(new BlockOutline(this))
-        spawnEntity(new DummyEntity(new Vec3f(10, 90, 10), this))
+        spawnEntity(new DummyEntity(new Vec3f(32, 120, 32), this))
     }
 
     override protected def tick(): Unit = {
         super.tick()
 
-//        val input = Game.input.getAxis(Axis.Movement)
-//        Game.window.camera.pos = Game.window.camera.pos + input
-
         entities.forEach((_, e) => e.tick())
-
-//        val mouse = Game.input.mousePos
-//        val dir = Math.atan2(
-//            (mouse.y - (Camera.sizeY / 2.0)),
-//            (mouse.x - (Camera.sizeX / 2.0))
-//        ) + (Math.PI / 4.0)
-//
-//        sunPos = new Vec3i(
-//            (Math.cos(dir) * 100).toInt,
-//            100,
-//            (Math.sin(dir) * 100).toInt
-//        )
 
         val rad = Math.toRadians(ticks / 2.0)
         sunPos = new Vec3i(
@@ -148,10 +127,9 @@ class World extends Scene {
             worldDepthBuffer.bindBuffer()
 
             chunkMap.renderDepth()
-
-            Renderer.enableDepthTest()
         }
 
+        Renderer.enableDepthTest()
         worldNormalBuffer.bindBuffer()
         chunkMap.renderNormals()
 
@@ -165,6 +143,7 @@ class World extends Scene {
 
         Renderer.unbindRenderBuffer()
 
+        Renderer.disableDepthTest()
         worldSprite.render(delta)
     }
 

@@ -8,27 +8,16 @@ uniform sampler2D depthTex;
 uniform highp vec2 depthSize;
 
 uniform mediump vec3 sunPos;
-uniform mediump vec3 worldSize;
 uniform mediump float renderState;
 
 #include "block_util.glsl"
 #include "depth_util.glsl"
 
-bool isOutOfBounds(highp vec3 pos) {
-    return (
-        pos.x < 0.0 ||
-        pos.y < 0.0 ||
-        pos.z < 0.0 ||
-        pos.x >= worldSize.x ||
-        pos.y >= worldSize.y ||
-        pos.z >= worldSize.z
-    );
-}
-
 void main(void) {
     highp vec4 pixel = texture2D(tex, uv);
     if(pixel.a <= 0.0) {
-        discard;
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        return;
     }
 
     highp vec4 posPixel = texture2D(posTex, uv);
@@ -53,14 +42,14 @@ void main(void) {
         if(isOutOfBounds(blockCheckPos) || !isPosInBlock(blockCheckPos, depthTex, depthSize)) {
             pixel.rgb *= 0.9;
         }
-        else {
-            blockCheckPos.x -= normal.r * 2.0;
-            blockCheckPos.z += normal.b * 2.0;
-
-            if(isOutOfBounds(blockCheckPos) || !isPosInBlock(blockCheckPos, depthTex, depthSize)) {
-                pixel.rgb *= 0.9;
-            }
-        }
+//        else {
+//            blockCheckPos.x -= normal.r * 2.0;
+//            blockCheckPos.z += normal.b * 2.0;
+//
+//            if(isOutOfBounds(blockCheckPos) || !isPosInBlock(blockCheckPos, depthTex, depthSize)) {
+//                pixel.rgb *= 0.9;
+//            }
+//        }
 
         normal.g = ceil((ceil(_normal.g * 255.0) - edgeCheck) / 16.0);
 
@@ -105,7 +94,7 @@ void main(void) {
         pixel.rgb *= 0.5;
     }
     else {
-        for(mediump float i = 0.0; i < 128.0; i += 1.0) {
+        for(mediump float i = 0.0; i < 1024.0; i += 1.0) {
             worldPos += sunDir;
 
             if(isOutOfBounds(worldPos)) {

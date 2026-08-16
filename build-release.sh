@@ -1,9 +1,12 @@
 #!/bin/bash
 set -e
 
+echo "Ensure debug mode is off!" # i am a forgetful someone
+sleep 3
+
 echo "Initializing..."
-rm -r dist/assets
-rm dist/main.js
+rm -rf dist/assets
+rm -f dist/main.js
 
 echo "Compiling..."
 sbt fullLinkJS

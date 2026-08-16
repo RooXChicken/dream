@@ -1,6 +1,7 @@
 package org.loveroo.webgl.engine.render.impl
 
-import java.util.{ArrayList, HashMap, List}
+import java.lang.IllegalStateException
+import java.util.{ArrayList, HashMap, HashSet, List}
 import org.loveroo.webgl.engine.data.BufferWrapper
 import org.loveroo.webgl.engine.render.batch.{AttributeNotFoundException, Batch, BatchElement, DataType, ElementData, FloatElementData, Vec2ElementData, Vec3ElementData, Vec4ElementData}
 import org.loveroo.webgl.engine.render.data.{ColorFormats, TextureSlot, TextureTypes}
@@ -8,7 +9,7 @@ import org.loveroo.webgl.{Game, Runtime}
 import org.loveroo.webgl.engine.render.{EmptyTexture, FloatUniform, ImageTexture, RenderBuffer, RenderBufferCreateException, Renderer, Shader, ShaderCompilationFailureException, ShaderID, ShaderLinkFailureException, Texture, TextureUniform, Uniform2f, Uniform3f, Uniform4f, UniformValue}
 import org.scalajs.dom.webgl.extensions.WebGLVertexArrayObjectOES
 import org.scalajs.dom.webgl.{ANGLE_instanced_arrays, OES_element_index_uint, OES_vertex_array_object, WEBGL_depth_texture, WebGLExtensionIdentifier}
-import org.scalajs.dom.{ImageData, WebGLBuffer, WebGLFramebuffer, WebGLProgram, WebGLRenderbuffer, WebGLRenderingContext, WebGLShader, WebGLTexture, WebGLUniformLocation}
+import org.scalajs.dom.{ImageData, WebGLBuffer, WebGLFramebuffer, WebGLProgram, WebGLRenderbuffer, WebGLRenderingContext, WebGLShader, WebGLTexture, WebGLUniformLocation, Worker}
 import scala.{Exception, RuntimeException}
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.{ArrayBuffer, ArrayBufferView, Float32Array, Uint16Array, Uint32Array, Uint8Array}
@@ -60,7 +61,7 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
     @Null
     private var boundShader: ShaderID = null
     private var boundFramebuffer = ""
-    private var activeTexture = -1
+    private var activeTextureSlot = -1
 
     private var currentViewportWidth = 0
     private var currentViewportHeight = 0
@@ -72,8 +73,6 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
     enableDepthTest()
 
     override def render(delta: Double): Unit = {
-        gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT)
-
         val frame = Game.runtime.frame
         Game.runtime.newFrame()
 
@@ -87,7 +86,7 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
             _fps = calcFps
             calcFps = 0
 
-            Game.runtime.debugLog(s"FPS: ${fps}")
+            println(s"FPS: ${fps}")
         }
     }
 
@@ -172,9 +171,9 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
     override def activateSlot(slot: TextureSlot): Unit = {
         val id = WebGLRenderingContext.TEXTURE0 + slot.id
 
-        if(activeTexture != id) {
+        if(activeTextureSlot != id) {
             gl.activeTexture(id)
-            activeTexture = id
+            activeTextureSlot = id
         }
     }
 
@@ -206,9 +205,32 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
         }
 
         def compileShader(source: String, shaderType: Int, code: String): WebGLShader = {
+            val addedConst = new HashSet[String]()
+
+            val finalCode = Renderer.constantsRegex.replaceAllIn(code, m => {
+                val const = m.group(1)
+
+                if(!addedConst.contains(const)) {
+                    addedConst.add(const)
+                    val value = Renderer.constants.get(const)
+
+                    value match {
+                        case _f: FloatUniform => s"highp float ${const} = ${_f.value}.0;"
+                        case _2f: Uniform2f => s"highp vec2 ${const} = vec2(${_2f.x}.0, ${_2f.y}.0);"
+                        case _3f: Uniform3f => s"highp vec3 ${const} = vec3(${_3f.x}.0, ${_3f.y}.0, ${_3f.z}.0);"
+                        case _4f: Uniform4f => s"highp vec4 ${const} = vec4(${_4f.x}.0, ${_4f.y}.0, ${_4f.z}.0, ${_4f.w}.0);"
+
+                        case _ => throw new IllegalStateException(s"Constant ${const} in ${shader.id} has an invalid type")
+                    }
+                }
+                else {
+                    ""
+                }
+            })
+
             val ptr = gl.createShader(shaderType)
 
-            gl.shaderSource(ptr, code)
+            gl.shaderSource(ptr, finalCode)
             gl.compileShader(ptr)
 
             val status = gl.getShaderParameter(
@@ -221,7 +243,7 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
                     shader.id,
                     source,
                     gl.getShaderInfoLog(ptr),
-                    code
+                    finalCode
                 )
             }
 
@@ -263,7 +285,7 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
         }
     }
 
-    override def bindShader(shader: Shader): Unit = {
+    override def bindShader(shader: Shader, init: Boolean): Unit = {
         if(boundShader == shader.id) {
             return
         }
@@ -276,21 +298,25 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
         boundShader = shader.id
         gl.useProgram(obj.ptr)
 
-        obj.boundTextures.forEach((s, t) => {
-            bindTexture(s, t)
-        })
+        if(init) {
+            obj.boundTextures.forEach((s, t) => {
+                bindTexture(s, t)
+            })
 
-        obj.toBindCache.forEach((id, v) => setShaderUniform(shader, id, v))
-        obj.toBindCache.clear()
+            if(obj.toBindCache.size() > 0) {
+                obj.toBindCache.forEach((id, v) => setShaderUniform(shader, id, v))
+                obj.toBindCache.clear()
+            }
 
-        setShaderUniform(
-            shader,
-            "frameSize",
-            new Uniform2f(
-                currentViewportWidth,
-                currentViewportHeight
+            setShaderUniform(
+                shader,
+                "frameSize",
+                new Uniform2f(
+                    currentViewportWidth,
+                    currentViewportHeight
+                )
             )
-        )
+        }
     }
 
     override def setShaderUniform(shader: Shader, id: String, value: UniformValue): Unit = {
@@ -299,7 +325,9 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
             return
         }
 
-        if(obj.locCache.containsKey(id) && obj.locCache.get(id) == null) {
+        val cachedLoc = obj.locCache.get(id)
+
+        if(obj.locCache.containsKey(id) && cachedLoc == null) {
             return
         }
 
@@ -308,8 +336,8 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
             return
         }
 
-        val loc = obj.locCache.get(id) ? {
-            bindShader(shader)
+        val loc = cachedLoc ? {
+            bindShader(shader, false)
             gl.getUniformLocation(obj.ptr, id)
         }
 
@@ -317,9 +345,7 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
             Game.runtime.debugLog(s"Uniform ${id} not found in ${shader.id}")
         }
 
-        if(!obj.locCache.containsKey(id)) {
-            obj.locCache.put(id, loc)
-        }
+        obj.locCache.putIfAbsent(id, loc)
 
         if(loc == null) {
             return
@@ -401,7 +427,7 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
         gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, vbo)
         gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, vertices.buff, WebGLRenderingContext.DYNAMIC_DRAW)
 
-        bindShader(batch.shader)
+        bindShader(batch.shader, true)
 
         gl.enableVertexAttribArray(0)
         gl.vertexAttribPointer(
