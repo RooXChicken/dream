@@ -8,14 +8,14 @@ uniform vec4 camera;
 
 varying highp vec2 uv;
 
-#include "const.glsl"
+#const "depthDiv"
 
 void main() {
     uv = vertexUV;
 
     gl_Position = vec4(
         ((vertexUV * scale) + pos.xy - camera.xy) / camera.zw,
-        pos.z / const_depthDiv,
+        pos.z / depthDiv,
         1.0
     );
 }

@@ -1,11 +1,13 @@
-#include "const.glsl"
-#include "bit_util.glsl"
+#const "blockDepthPixelSize"
+#const "distance"
+
+#include "block_util.glsl"
 #include "util.glsl"
 
 highp vec2 worldPosToDepthUV(highp vec2 blockPos, highp float zIndex, highp vec2 vertexUV) {
     return vec2(
-        (blockPos.x * (const_depthSize * 2.0 * const_distance)) + (zIndex * const_depthSize) + (vertexUV.x * const_depthSize),
-        (blockPos.y * const_depthSize) + (vertexUV.y * const_depthSize)
+        (blockPos.x * (blockDepthPixelSize * 2.0 * distance)) + (zIndex * blockDepthPixelSize) + (vertexUV.x * blockDepthPixelSize),
+        (blockPos.y * blockDepthPixelSize) + (vertexUV.y * blockDepthPixelSize)
     );
 }
 

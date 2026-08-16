@@ -1,6 +1,19 @@
+#const "atlasRowAmount"
+#const "blockPixelSize"
+#const "worldSize"
+
 #include "util.glsl"
-#include "bit_util.glsl"
-#include "const.glsl"
+
+bool isOutOfBounds(highp vec3 pos) {
+    return (
+        pos.x < 0.0 ||
+        pos.y < 0.0 ||
+        pos.z < 0.0 ||
+        pos.x >= worldSize.x ||
+        pos.y >= worldSize.y ||
+        pos.z >= worldSize.z
+    );
+}
 
 highp vec4 posToPixel(highp vec3 worldPos) {
     highp float blockX = floor(worldPos.x / 8.0);
@@ -37,14 +50,14 @@ highp vec3 pixelToPos(highp vec4 _pixel) {
     );
 }
 
-highp vec2 correctUV(highp vec2 vertexUV, highp vec2 blockUV, mediump float blockSize) {
-    highp vec2 correctedUV = (vertexUV / blockSize);
+highp vec2 correctUV(highp vec2 vertexUV, highp vec2 blockUV) {
+    highp vec2 correctedUV = (vertexUV / atlasRowAmount);
     return blockUV + correctedUV;
 }
 
-highp vec3 toWorldPos(highp vec3 blockPos, mediump float blockSize) {
-    mediump float halfSize = blockSize / 2.0;
-    mediump float quarterSize = blockSize / 4.0;
+highp vec3 toWorldPos(highp vec3 blockPos) {
+    mediump float halfSize = blockPixelSize / 2.0;
+    mediump float quarterSize = blockPixelSize / 4.0;
 
     return vec3(
         blockPos.x * halfSize + blockPos.z * halfSize,
