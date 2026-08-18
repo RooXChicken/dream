@@ -54,7 +54,7 @@ class ChunkMap extends Destroyable {
             x += 0.1
         }
 
-        renderer.regenerateBatch()
+        renderer.queueRegeneration()
     }
 
     def tick(ticks: Int): Unit = {
@@ -86,6 +86,9 @@ class ChunkMap extends Destroyable {
         })
     }
 
+    def regenerateIfNeeded(): Unit =
+        renderer.regenerateIfNeeded()
+
     def renderWorld(): Unit = {
         renderer.renderWorld()
     }
@@ -98,7 +101,7 @@ class ChunkMap extends Destroyable {
         renderer.renderPositions()
     }
 
-    def redrawNeeded: Boolean = renderer.depthRedrawNeeded
+    def depthRedrawNeeded: Boolean = renderer.depthRedrawNeeded
     def renderDepth(): Unit = {
         renderer.renderDepth()
     }

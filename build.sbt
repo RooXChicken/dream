@@ -1,4 +1,5 @@
 import org.scalajs.linker.interface.ModuleSplitStyle
+import org.scalajs.linker.interface.ModuleInitializer
 
 name := "webgl"
 scalaVersion := "3.8.3"
@@ -7,25 +8,16 @@ lazy val predef = project
 
 lazy val webgl = project.in(file("."))
     .dependsOn(predef)
-    .enablePlugins(ScalaJSPlugin) // Enable the Scala.js plugin in this project
+    .enablePlugins(ScalaJSPlugin, WebScalaJSBundlerPlugin)
     .settings(
-        // Tell Scala.js that this is an application with a main method
-        scalaJSUseMainModuleInitializer := true,
         scalacOptions ++= Seq(
             "-Yimports:org.loveroo.predef.Predef"
         ),
-
-        /* Configure Scala.js to emit modules in the optimal way to
-         * connect to Vite's incremental reload.
-         * - emit ECMAScript modules
-         * - emit as many small modules as possible for classes in the "livechart" package
-         * - emit as few (large) modules as possible for all other classes
-         *   (in particular, for the standard library)
-         */
-        scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule) },
-
-        /* Depend on the scalajs-dom library.
-         * It provides static types for the browser DOM APIs.
-         */
+        scalaJSLinkerConfig ~= {
+            _.withModuleKind(ModuleKind.ESModule)
+        },
         libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.8.1",
+        Compile / scalaJSModuleInitializers += {
+            ModuleInitializer.mainMethod("org.loveroo.webgl.Runtime", "main")
+        },
     )

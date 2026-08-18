@@ -1,6 +1,7 @@
 package org.loveroo.webgl.game.world
 
 import java.util.{ArrayList, List}
+import org.loveroo.webgl.Game
 import org.loveroo.webgl.engine.math.Noise
 import scala.scalajs.js.{Date, Math}
 
@@ -9,7 +10,7 @@ trait Generator {
 }
 
 class TestGenerator extends Generator {
-    Noise.noiseSeed(Date.now())
+    Noise.noiseSeed(Game.runtime.isDebug.evaluate(0.0, Date.now()))
 
     override def generateBlocks(chunkX: Int, chunkZ: Int): List[BlockType] = {
         val blocks = new ArrayList[BlockType](Chunk.chunkElementSize)

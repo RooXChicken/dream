@@ -10,7 +10,7 @@ import scala.scalajs.js
 class WebEngineRuntime extends EngineRuntime {
     override val input: Input = new WebInput()
 
-    if(isDebug) {
+    if(debug) {
         js.eval(
             """
                 var newScript = document.createElement("script")

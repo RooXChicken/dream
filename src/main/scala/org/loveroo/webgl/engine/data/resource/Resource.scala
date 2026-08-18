@@ -11,6 +11,9 @@ trait Resource[R <: Resource[?]] extends Destroyable {
 
     private val onLoads = new LinkedList[R => Unit]()
 
+    @Null
+    private[engine] var rendererData: AnyRef = null
+
     def onLoad(value: R => Unit): Unit = {
         if(!loaded) {
             onLoads.addLast(value)
@@ -23,11 +26,11 @@ trait Resource[R <: Resource[?]] extends Destroyable {
     protected def postCreate(): Unit = {
         _loaded = true
 
-        onLoads.forEach(_(this.as[R]))
-        onLoads.clear()
-
         buffered.forEach(_())
         buffered.clear()
+
+        onLoads.forEach(_(this.as[R]))
+        onLoads.clear()
     }
 
     protected def create(): Unit

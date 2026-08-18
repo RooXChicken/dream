@@ -1,6 +1,7 @@
 package org.loveroo.webgl.engine.runtime.impl
 
 import java.util.LinkedList
+import org.loveroo.webgl.engine.data.JSMap
 import org.loveroo.webgl.engine.input.{Button, Buttons, Input}
 import org.scalajs.dom
 import org.scalajs.dom.{KeyCode, KeyLocation}
@@ -8,7 +9,7 @@ import scala.collection.mutable.HashSet
 
 class WebInput extends Input {
     override val buttons: Buttons = new WebButtons()
-    private val pressedKeys = new LinkedList[Int]()
+    private val pressedKeys = new JSMap[Int, AnyRef]()
 
     Input.initButtons(this)
 
@@ -19,12 +20,12 @@ class WebInput extends Input {
 
     dom.window.onkeydown = event => {
         if(!pressedKeys.contains(event.keyCode)) {
-            pressedKeys.addLast(event.keyCode)
+            pressedKeys.put(event.keyCode, null)
         }
     }
 
     dom.window.onkeyup = event => {
-        pressedKeys.remove(event.keyCode.as[AnyRef])
+        pressedKeys.remove(event.keyCode)
     }
 }
 

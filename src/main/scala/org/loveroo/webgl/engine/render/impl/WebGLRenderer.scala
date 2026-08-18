@@ -1,20 +1,22 @@
 package org.loveroo.webgl.engine.render.impl
 
 import java.lang.IllegalStateException
-import java.util.{ArrayList, HashMap, HashSet, List}
-import org.loveroo.webgl.engine.data.BufferWrapper
+import java.util.{ArrayList, HashMap, HashSet, LinkedList, List}
+import org.loveroo.predef.ListUtil
+import org.loveroo.webgl.engine.data.{BufferWrapper, JSMap}
 import org.loveroo.webgl.engine.render.batch.{AttributeNotFoundException, Batch, BatchElement, DataType, ElementData, FloatElementData, Vec2ElementData, Vec3ElementData, Vec4ElementData}
 import org.loveroo.webgl.engine.render.data.{ColorFormats, TextureSlot, TextureTypes}
 import org.loveroo.webgl.{Game, Runtime}
 import org.loveroo.webgl.engine.render.{EmptyTexture, FloatUniform, ImageTexture, RenderBuffer, RenderBufferCreateException, Renderer, Shader, ShaderCompilationFailureException, ShaderID, ShaderLinkFailureException, Texture, TextureUniform, Uniform2f, Uniform3f, Uniform4f, UniformValue}
+import org.loveroo.webgl.engine.runtime.{RenderTask, TickTask}
 import org.scalajs.dom.webgl.extensions.WebGLVertexArrayObjectOES
 import org.scalajs.dom.webgl.{ANGLE_instanced_arrays, OES_element_index_uint, OES_vertex_array_object, WEBGL_depth_texture, WebGLExtensionIdentifier}
 import org.scalajs.dom.{ImageData, WebGLBuffer, WebGLFramebuffer, WebGLProgram, WebGLRenderbuffer, WebGLRenderingContext, WebGLShader, WebGLTexture, WebGLUniformLocation, Worker}
 import scala.{Exception, RuntimeException}
 import scala.scalajs.js
+import scala.scalajs.js.Map
 import scala.scalajs.js.typedarray.{ArrayBuffer, ArrayBufferView, Float32Array, Uint16Array, Uint32Array, Uint8Array}
 
-// TODO: Use a cache of gpu commands so instead of allocating new objects it grabs the first unused one and fills out the data. Use frame number instead of resetting them. Use weak references so that when the objects used as data don’t get kept around forever if another command doesn’t overwrite the data. Have each type of gpu command be an enum that handles the data in its own function
 class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
     override val textureTypes: TextureTypes = new WebGLTextureTypes()
     override val colorFormats: ColorFormats = new WebGLColorFormats()
@@ -43,7 +45,7 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
     private val vaoExt = enableExtension(OES_vertex_array_object)
     private val instanceExt = enableExtension(ANGLE_instanced_arrays)
 
-    private var lastUpdate = 0.0
+    private var lastTime = Runtime.time
     private var calcFps = 0
     private var _fps = 0
 
@@ -51,15 +53,19 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
 
     private var depthEnabled = false
 
-    private val textures = new HashMap[String, WebGLTexture]()
-    private val shaders = new HashMap[ShaderID, WebGLCompiledShader]()
-    private val batches = new HashMap[String, WebGLBatch]()
-    private val renderBuffers = new HashMap[String, WebGLFramebuffer]()
+    private val textures = new JSMap[String, WebGLTexture]()
+    private val shaders = new LinkedList[WebGLCompiledShader]()
+    private val batches = new JSMap[String, WebGLBatch]()
+    private val renderBuffers = new JSMap[String, WebGLFramebuffer]()
 
-    private val boundTextures = new HashMap[TextureSlot, WebGLTexture]()
+    private val boundTextures = new ArrayList[String](TextureSlot.slots.size())
+
+    TextureSlot.slots.forEach(s => {
+        boundTextures.add("")
+    })
 
     @Null
-    private var boundShader: ShaderID = null
+    private var boundShader: Shader = null
     private var boundFramebuffer = ""
     private var activeTextureSlot = -1
 
@@ -72,16 +78,18 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
     gl.depthFunc(WebGLRenderingContext.LESS)
     enableDepthTest()
 
-    override def render(delta: Double): Unit = {
+    override def render(): Unit = {
         val frame = Game.runtime.frame
         Game.runtime.newFrame()
+
+        Game.instance.tick()
 
         frame.renderFrame(this)
 
         calcFps += 1
 
-        while(delta - lastUpdate >= 1000.0) {
-            lastUpdate += 1000.0
+        while(Runtime.time - lastTime >= 1000000.0) {
+            lastTime += 1000000.0
 
             _fps = calcFps
             calcFps = 0
@@ -94,6 +102,8 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
         if(!depthEnabled) {
             gl.enable(WebGLRenderingContext.DEPTH_TEST)
             depthEnabled = true
+
+            Game.runtime.verboseLog(s"Depth test enabled")
         }
     }
 
@@ -101,15 +111,24 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
         if(depthEnabled) {
             gl.disable(WebGLRenderingContext.DEPTH_TEST)
             depthEnabled = false
+
+            Game.runtime.verboseLog(s"Depth test enabled")
         }
     }
 
     override def createTexture(texture: Texture): Unit = {
-        if(textures.containsKey(texture.id)) {
+        if(texture.rendererData != null) {
+            return
+        }
+
+        if(textures.contains(texture.id)) {
+            texture.rendererData = textures.get(texture.id)
             return
         }
 
         val ptr = gl.createTexture()
+        texture.rendererData = ptr
+
         textures.put(texture.id, ptr)
 
         bindTexture(TextureSlot.One, texture)
@@ -166,6 +185,8 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
                 )
             }
         }
+
+        Game.runtime.verboseLog(s"Texture ${texture.id} created")
     }
 
     override def activateSlot(slot: TextureSlot): Unit = {
@@ -174,35 +195,44 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
         if(activeTextureSlot != id) {
             gl.activeTexture(id)
             activeTextureSlot = id
+
+            Game.runtime.verboseLog(s"Activated texture slot ${slot.id}")
         }
     }
 
     override def bindTexture(slot: TextureSlot, texture: Texture): Unit = {
-        val ptr = textures.get(texture.id)
-        if(ptr == null || boundTextures.get(slot) == ptr) {
+        val ptr = texture.rendererData.tryAs[WebGLTexture]
+        if(ptr == null || boundTextures.get(slot.id) == texture.id) {
             return
         }
 
-        boundTextures.put(slot, ptr)
+        boundTextures.set(slot.id, texture.id)
 
         activateSlot(slot)
         gl.bindTexture(texture.textureType.id, ptr)
+
+        Game.runtime.verboseLog(s"Bound texture ${texture.id}")
     }
 
     override def destroyTexture(texture: Texture): Unit = {
-        val ptr = textures.get(texture.id)
+        val ptr = texture.rendererData.tryAs[WebGLTexture]
         if(ptr == null) {
             return
         }
 
         gl.deleteTexture(ptr)
         textures.remove(texture.id)
+        texture.rendererData = null
+
+        Game.runtime.verboseLog(s"Destroyed texture ${texture.id}")
     }
 
     override def createShader(shader: Shader): Unit = {
-        if(shaders.containsKey(shader.id)) {
+        if(shader.rendererData != null) {
             return
         }
+
+        Game.runtime.verboseLog(s"Creating shader ${shader.id}")
 
         def compileShader(source: String, shaderType: Int, code: String): WebGLShader = {
             val addedConst = new HashSet[String]()
@@ -247,6 +277,8 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
                 )
             }
 
+            Game.runtime.verboseLog(s"Created shader element ${shaderType}")
+
             ptr
         }
 
@@ -273,30 +305,39 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
         }
 
         ptrs.forEach(gl.deleteShader)
-        shaders.put(shader.id, new WebGLCompiledShader(shader, programPtr))
+
+        val ptr = new WebGLCompiledShader(shader, programPtr)
+        shader.rendererData = ptr
+        shaders.addLast(ptr)
     }
 
     override def destroyShader(shader: Shader): Unit = {
-        val ptr = shaders.get(shader.id)
+        val ptr = shader.rendererData.tryAs[WebGLCompiledShader]
 
         if(ptr != null) {
             gl.deleteProgram(ptr.ptr)
-            shaders.remove(shader.id)
+
+            shaders.remove(ptr)
+            shader.rendererData = null
+
+            Game.runtime.verboseLog(s"Destroyed shader ${shader.id}")
         }
     }
 
     override def bindShader(shader: Shader, init: Boolean): Unit = {
-        if(boundShader == shader.id) {
+        if(boundShader == shader) {
             return
         }
 
-        val obj = shaders.get(shader.id)
+        val obj = shader.rendererData.tryAs[WebGLCompiledShader]
         if(obj == null) {
             return
         }
 
-        boundShader = shader.id
+        boundShader = shader
         gl.useProgram(obj.ptr)
+
+        Game.runtime.verboseLog(s"Bound shader ${shader.id}")
 
         if(init) {
             obj.boundTextures.forEach((s, t) => {
@@ -320,14 +361,14 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
     }
 
     override def setShaderUniform(shader: Shader, id: String, value: UniformValue): Unit = {
-        val obj = shaders.get(shader.id)
+        val obj = shader.rendererData.tryAs[WebGLCompiledShader]
         if(obj == null) {
             return
         }
 
         val cachedLoc = obj.locCache.get(id)
 
-        if(obj.locCache.containsKey(id) && cachedLoc == null) {
+        if(obj.locCache.contains(id) && cachedLoc == null) {
             return
         }
 
@@ -351,12 +392,13 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
             return
         }
 
-        if(boundShader != shader.id) {
+        if(boundShader != shader) {
             obj.toBindCache.put(id, value)
             return
         }
 
         obj.uniformCache.put(id, value)
+        Game.runtime.verboseLog(s"Putting uniform ${id} for shader ${shader.id}")
 
         value match {
             case _f: FloatUniform => gl.uniform1f(loc, _f.value)
@@ -374,17 +416,24 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
     }
 
     override def setShaderUniformGlobal(id: String, value: UniformValue): Unit = {
-        shaders.forEach((_, obj) => {
+        Game.runtime.verboseLog(s"Setting global shader uniform ${id}")
+
+        shaders.forEach(obj => {
             setShaderUniform(obj.shader, id, value)
         })
     }
 
     override def createBatch[E <: BatchElement](batch: Batch[E]): Unit = {
-        if(batches.containsKey(batch.id)) {
+        if(batch.rendererData != null) {
             return
         }
 
-        val shaderPtr = shaders.get(batch.shader.id)
+        if(batches.contains(batch.id)) {
+            batch.rendererData = batches.get(batch.id)
+            return
+        }
+
+        val shaderPtr = batch.shader.rendererData.tryAs[WebGLCompiledShader]
         if(shaderPtr == null) {
             return
         }
@@ -396,7 +445,9 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
         val tbo = gl.createBuffer()
         val ebo = gl.createBuffer()
 
-        batches.put(batch.id, new WebGLBatch(vao, vbo, ebo, tbo))
+        val batchPtr = new WebGLBatch(vao, vbo, ebo, tbo)
+        batch.rendererData = batchPtr
+        batches.put(batch.id, batchPtr)
 
         val indices = new BufferWrapper(new Uint8Array(6))
         indices.put(0)
@@ -450,29 +501,31 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
 
             val index = gl.getAttribLocation(shaderPtr.ptr, d.id)
             if(index == -1) {
-                throw new AttributeNotFoundException(batch.id, d.id)
+                Game.runtime.debugLog(s"Attribute ${d.id} not found for ${batch.id}")
             }
+            else {
+                gl.enableVertexAttribArray(index)
+                instanceExt.vertexAttribDivisorANGLE(index, 1)
 
-            gl.enableVertexAttribArray(index)
-            instanceExt.vertexAttribDivisorANGLE(index, 1)
-
-            gl.vertexAttribPointer(
-                index,
-                d.descriptorType.count,
-                valueType,
-                false,
-                batch.descriptor.size,
-                offset
-            )
+                gl.vertexAttribPointer(
+                    index,
+                    d.descriptorType.count,
+                    valueType,
+                    false,
+                    batch.descriptor.size,
+                    offset
+                )
+            }
 
             offset += d.descriptorType.size
         })
 
         vaoExt.bindVertexArrayOES(null)
+        Game.runtime.verboseLog(s"Created batch ${batch.id}")
     }
 
     override def destroyBatch[E <: BatchElement](batch: Batch[E]): Unit = {
-        val ptr = batches.get(batch.id)
+        val ptr = batch.rendererData.tryAs[WebGLBatch]
 
         if(ptr != null) {
             gl.deleteBuffer(ptr.vbo)
@@ -481,11 +534,14 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
             vaoExt.deleteVertexArrayOES(ptr.vao)
 
             batches.remove(batch.id)
+            batch.rendererData = null
+
+            Game.runtime.verboseLog(s"Destroyed batch ${batch.id}")
         }
     }
 
     override def putBatch[E <: BatchElement](batch: Batch[E], elements: List[E]): Unit = {
-        val ptr = batches.get(batch.id)
+        val ptr = batch.rendererData.tryAs[WebGLBatch]
         if(ptr == null) {
             return
         }
@@ -495,10 +551,12 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
 
         gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, ptr.tbo)
         gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, buffer.buff, WebGLRenderingContext.DYNAMIC_DRAW)
+
+        Game.runtime.verboseLog(s"Put batch ${batch.id} elements ${elements.size()}")
     }
 
     override def putBatchElement[E <: BatchElement](batch: Batch[E], index: Int, element: E): Unit = {
-        val ptr = batches.get(batch.id)
+        val ptr = batch.rendererData.tryAs[WebGLBatch]
         if(ptr == null) {
             return
         }
@@ -508,6 +566,8 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
 
         gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, ptr.tbo)
         gl.bufferSubData(WebGLRenderingContext.ARRAY_BUFFER, index * batch.descriptor.size, buffer.buff)
+
+        Game.runtime.verboseLog(s"Put batch ${batch.id} element ${index}")
     }
 
     private def putBuff(buff: BufferWrapper[Float, Float32Array], data: List[? <: ElementData]): Unit = {
@@ -536,7 +596,7 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
     }
 
     override def renderBatch[E <: BatchElement](batch: Batch[E]): Unit = {
-        val ptr = batches.get(batch.id)
+        val ptr = batch.rendererData.tryAs[WebGLBatch]
         if(ptr == null) {
             return
         }
@@ -553,30 +613,41 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
     }
 
     override def createRenderBuffer(buffer: RenderBuffer): Unit = {
-        if(renderBuffers.containsKey(buffer.id)) {
+        if(buffer.rendererData != null) {
+            return
+        }
+
+        if(renderBuffers.contains(buffer.id)) {
+            buffer.rendererData = batches.get(buffer.id)
             return
         }
 
         val ptr = gl.createFramebuffer()
-        renderBuffers.put(buffer.id, ptr)
+        buffer.rendererData = ptr
+
+        Game.runtime.verboseLog(s"Creating framebuffer ${buffer.id}")
 
         bindRenderBuffer(buffer)
 
         gl.framebufferTexture2D(
             WebGLRenderingContext.FRAMEBUFFER,
             WebGLRenderingContext.COLOR_ATTACHMENT0,
-            buffer.textureType.id,
-            textures.get(buffer.id),
+            buffer.renderTex.textureType.id,
+            buffer.renderTex.rendererData.as[WebGLTexture],
             0
         )
+
+        Game.runtime.verboseLog(s"Set color attachment as ${buffer.renderTex.id}")
 
         gl.framebufferTexture2D(
             WebGLRenderingContext.FRAMEBUFFER,
             WebGLRenderingContext.DEPTH_ATTACHMENT,
             buffer.depthTex.textureType.id,
-            textures.get(buffer.depthTex.id),
+            buffer.depthTex.rendererData.as[WebGLTexture],
             0
         )
+
+        Game.runtime.verboseLog(s"Set depth attachment as ${buffer.depthTex.id}")
 
         if(gl.checkFramebufferStatus(WebGLRenderingContext.FRAMEBUFFER) != WebGLRenderingContext.FRAMEBUFFER_COMPLETE) {
             throw new RenderBufferCreateException(buffer.id)
@@ -584,7 +655,7 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
     }
 
     override def destroyRenderBuffer(buffer: RenderBuffer): Unit = {
-        val ptr = renderBuffers.get(buffer.id)
+        val ptr = buffer.rendererData.tryAs[WebGLFramebuffer]
         if(ptr == null) {
             return
         }
@@ -595,6 +666,9 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
 
         gl.deleteFramebuffer(ptr)
         renderBuffers.remove(buffer.id)
+        buffer.rendererData = null
+
+        Game.runtime.verboseLog(s"Destroyed framebuffer ${buffer.id}")
     }
 
     override def bindRenderBuffer(buffer: RenderBuffer): Unit = {
@@ -602,10 +676,13 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
             return
         }
 
-        val ptr = renderBuffers.get(buffer.id)
+        val ptr = buffer.rendererData.tryAs[WebGLFramebuffer]
         if(ptr == null) {
+            Game.runtime.verboseLog(s"Framebuffer ${buffer.id} is null")
             return
         }
+
+        Game.runtime.verboseLog(s"Bound framebuffer ${buffer.id}")
 
         gl.bindFramebuffer(WebGLRenderingContext.FRAMEBUFFER, ptr)
         setViewport(buffer.width, buffer.height)
@@ -619,12 +696,16 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
 
             gl.bindFramebuffer(WebGLRenderingContext.FRAMEBUFFER, null)
             setViewport(Renderer.width, Renderer.height)
+
+            Game.runtime.verboseLog("Unbound framebuffer")
         }
     }
 
     override def clearRenderBuffer(buffer: RenderBuffer): Unit = {
         bindRenderBuffer(buffer)
         gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT)
+
+        Game.runtime.verboseLog("Cleared framebuffer")
     }
 
     override def setViewport(width: Int, height: Int): Unit = {
@@ -633,6 +714,7 @@ class WebGLRenderer(val gl: WebGLRenderingContext) extends Renderer {
             currentViewportHeight = height
 
             gl.viewport(0, 0, width, height)
+            Game.runtime.verboseLog(s"Set viewport to ${width} ${height}")
         }
     }
 }
@@ -642,10 +724,10 @@ object WebGLRenderer {
 }
 
 class WebGLCompiledShader(val shader: Shader, val ptr: WebGLProgram) {
-    val locCache = new HashMap[String, WebGLUniformLocation]()
-    val uniformCache = new HashMap[String, UniformValue]()
-    val toBindCache = new HashMap[String, UniformValue]()
-    val boundTextures = new HashMap[TextureSlot, Texture]()
+    val locCache = new JSMap[String, WebGLUniformLocation]()
+    val uniformCache = new JSMap[String, UniformValue]()
+    val toBindCache = new JSMap[String, UniformValue]()
+    val boundTextures = new JSMap[TextureSlot, Texture]()
 }
 
 class WebGLBatch(

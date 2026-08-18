@@ -54,7 +54,7 @@ class Batch[E <: BatchElement](
     }
 
     override def render(delta: Double): Unit = {
-        if(loaded && shader.loaded) {
+        if(loaded) {
             shader.bind()
 
             Game.runtime.newCommand(c => {

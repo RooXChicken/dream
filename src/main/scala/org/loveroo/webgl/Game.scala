@@ -5,11 +5,13 @@ import org.loveroo.webgl.engine.data.resource.ResourceLoader
 import org.loveroo.webgl.engine.input.Input
 import org.loveroo.webgl.engine.render.{ImageTexture, Renderer}
 import org.loveroo.webgl.engine.render.impl.WebGLRenderer
-import org.loveroo.webgl.engine.runtime.EngineRuntime
-import org.loveroo.webgl.engine.runtime.impl.WebEngineRuntime
+import org.loveroo.webgl.engine.runtime.{BackgroundTask, EngineRuntime, RenderTask}
+import org.loveroo.webgl.engine.runtime.impl.{WebBackgroundTask, WebEngineRuntime}
 import org.loveroo.webgl.game.scene.World
 import org.scalajs.dom
-import org.scalajs.dom.{HTMLCanvasElement, WebGLRenderingContext}
+import org.scalajs.dom.{HTMLCanvasElement, WebGLRenderingContext, Worker}
+import scala.scalajs.js
+import scala.scalajs.js.annotation.JSExport
 
 class Game {
     val runtime = new WebEngineRuntime()
@@ -26,12 +28,33 @@ class Game {
     val scene = new World()
     scene.init()
 
-    def run(delta: Double): Unit = {
-        scene.update()
-        scene.render(delta)
+    val renderTask = new RenderTask()
 
-        renderer.render(delta)
-        dom.window.requestAnimationFrame(run)
+    private var isTicking = false
+    private var tickQueued = false
+
+    def tick(): Unit = {
+        if(isTicking) {
+            tickQueued = true
+        }
+        else {
+            tick()
+        }
+    }
+
+    private def _tick(): Unit = {
+        isTicking = true
+
+        scene.update()
+        scene.renderScene()
+
+        renderTask.send(Game.frameCompleteMsg)
+
+        isTicking = false
+
+        if(tickQueued) {
+            tick()
+        }
     }
 }
 
@@ -45,4 +68,6 @@ object Game {
     def resourceLoader: ResourceLoader = runtime.resourceLoader
     def translator: Translator = runtime.translator
     def input: Input = runtime.input
+
+    val frameCompleteMsg = "frame_complete"
 }

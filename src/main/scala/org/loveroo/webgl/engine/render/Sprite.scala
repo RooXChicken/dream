@@ -49,11 +49,11 @@ class Sprite(
     override protected def create(): Unit = {
         super.create()
 
-        texture.onLoad(_ => {
+        texture.onLoad(t => {
             updatePos()
             updateScale()
 
-            shader.setUniform("tex", new TextureUniform(TextureSlot.One, texture))
+            shader.setUniform("tex", new TextureUniform(TextureSlot.One, t))
         })
     }
 

@@ -1,25 +1,26 @@
 package org.loveroo.webgl.engine.render
 
 import org.loveroo.webgl.Game
+import org.loveroo.webgl.engine.data.resource.Resource
 import org.loveroo.webgl.engine.render.data.ColorFormat
 import org.loveroo.webgl.engine.render.frame.command.Command
 import scala.{Exception, RuntimeException}
 
 class RenderBuffer(
-    id: String,
-    format: ColorFormat,
-    width: Int,
-    height: Int
-) extends EmptyTexture(
-    id + "$render",
-    format,
-    Renderer.textureTypes.Texture2D,
-    width,
-    height
-) {
+    val id: String,
+    val format: ColorFormat,
+    val width: Int,
+    val height: Int
+) extends Resource[RenderBuffer] {
+    @Null
+    private var _renderTex: Texture = _
+    def renderTex: Texture = _renderTex
+
     @Null
     private var _depthTex: Texture = _
     def depthTex: Texture = _depthTex
+
+    create()
 
     override protected def create(): Unit = {
         _depthTex = new EmptyTexture(
@@ -30,11 +31,34 @@ class RenderBuffer(
             height
         )
 
-        super.create()
+        _renderTex = new EmptyTexture(
+            id + "$render",
+            format,
+            Renderer.textureTypes.Texture2D,
+            width,
+            height
+        )
 
-        Game.runtime.newCommand(c => {
-            c.command = Command.CreateRenderBuffer
-            c.write(this)
+        def creationCompleted(): Unit = {
+            Game.runtime.newCommand(c => {
+                c.command = Command.CreateRenderBuffer
+                c.write(this)
+            })
+
+            postCreate()
+        }
+
+        // delay creation until these have fully loaded
+        renderTex.onLoad(_ => {
+            if(depthTex.loaded) {
+                creationCompleted()
+            }
+        })
+
+        depthTex.onLoad(_ => {
+            if(renderTex.loaded) {
+                creationCompleted()
+            }
         })
     }
 
@@ -57,13 +81,13 @@ class RenderBuffer(
     }
 
     override def destroy(): Unit = {
+        renderTex.destroy()
+        depthTex.destroy()
+
         Game.runtime.newCommand(c => {
             c.command = Command.DestroyRenderBuffer
             c.write(this)
         })
-
-        super.destroy()
-        depthTex.destroy()
     }
 }
 

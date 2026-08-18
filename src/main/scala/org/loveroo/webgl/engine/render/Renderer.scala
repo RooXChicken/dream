@@ -5,14 +5,14 @@ import org.loveroo.webgl.Game
 import org.loveroo.webgl.engine.render.batch.{Batch, BatchElement}
 import org.loveroo.webgl.engine.render.data.{ColorFormats, TextureSlot, TextureTypes}
 import org.loveroo.webgl.engine.render.frame.command.{Command, DepthTestCommand}
-import org.loveroo.webgl.game.world.{Chunk, ChunkMap}
+import org.loveroo.webgl.game.world.{BlockType, Chunk, ChunkMap}
 import scala.util.matching.Regex
 
 trait Renderer {
     val textureTypes: TextureTypes
     val colorFormats: ColorFormats
 
-    def render(delta: Double): Unit
+    def render(): Unit
 
     def enableDepthTest(): Unit
     def disableDepthTest(): Unit
@@ -77,6 +77,7 @@ object Renderer {
 
     constants.put("distance", new FloatUniform(ChunkMap.distance))
     constants.put("depthDiv", new FloatUniform(63553.0f))
+    constants.put("airBlockOrdinal", new FloatUniform(BlockType.Air.ordinal))
 
     constants.put("worldSize", new Uniform3f(
         Chunk.chunkSizeX * ChunkMap.distance * Chunk.blockDepthPixelSize,

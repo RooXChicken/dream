@@ -47,4 +47,8 @@ object ResourceLoader {
     val texturePath = s"${root}/texture"
     val dataPath = s"${root}/data"
     val langPath = s"${root}/lang"
+
+    def getPath(path: String): String = {
+        s"${ResourceLoader.root}/${path}"
+    }
 }

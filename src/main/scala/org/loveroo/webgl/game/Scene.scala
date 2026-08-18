@@ -2,7 +2,7 @@ package org.loveroo.webgl.game
 
 import org.loveroo.webgl.engine.render.Renderable
 import org.loveroo.webgl.Runtime
-import scala.scalajs.js.Math
+import scala.scalajs.js.{JSON, Math}
 
 trait Scene {
     private val targetTimestep = (1.0 / 60.0) * 1000.0

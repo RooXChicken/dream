@@ -3,18 +3,19 @@ package org.loveroo.webgl.game.world
 import java.lang.IllegalStateException
 import java.util.{ArrayList, List}
 import org.loveroo.predef.ListUtil
+import org.loveroo.webgl.Game
 import org.loveroo.webgl.engine.math.{Vec2f, Vec2i, Vec3f}
 import org.loveroo.webgl.engine.render.{AtlasID, FloatUniform, RenderBuffer, Renderer, Shader, Texture, TextureAtlas, TextureUniform, Uniform2f}
-import org.loveroo.webgl.engine.render.batch.{Batch, BatchDescriptor, BatchElement, Descriptor, DescriptorType, ElementData, FloatElementData, Vec2ElementData, Vec3ElementData}
+import org.loveroo.webgl.engine.render.batch.{Batch, BatchDescriptor, BatchElement, Descriptor, DescriptorType, ElementData, FloatElementData, Vec2ElementData, Vec3ElementData, Vec4ElementData}
 import org.loveroo.webgl.engine.render.data.TextureSlot
 import org.loveroo.webgl.game.world.Chunk.{blockDepthPixelSize, blockPixelSize}
 import org.loveroo.webgl.game.world.ChunkMap.distance
-import org.loveroo.webgl.game.world.ChunkRenderer.{blockAtlas, depthAtlas, depthShader}
+import org.loveroo.webgl.game.world.ChunkRenderer.{blockAtlas, depthAtlas, normalAtlas, posAtlas}
 import scala.RuntimeException
 import scala.collection.mutable.ArrayBuffer
 
 class ChunkRenderer(private val chunkMap: ChunkMap) {
-    private var depthRedraw = true
+    private var depthRedraw = false
 
     val blockShader = new Shader("chunk/block")
     val blockNormalShader = new Shader("chunk/block")
@@ -27,7 +28,8 @@ class ChunkRenderer(private val chunkMap: ChunkMap) {
         blockShader,
         new BatchDescriptor(ListUtil.of(
             new Descriptor("blockPos", DescriptorType.Vec3),
-            new Descriptor("blockUV", DescriptorType.Vec2)
+            new Descriptor("blockUV", DescriptorType.Vec2),
+            new Descriptor("blockType", DescriptorType.Float)
         ))
     )
 
@@ -38,43 +40,61 @@ class ChunkRenderer(private val chunkMap: ChunkMap) {
             new Descriptor("blockPos", DescriptorType.Vec2),
             new Descriptor("zIndex", DescriptorType.Float),
             new Descriptor("block12UV", DescriptorType.Vec4),
-            new Descriptor("block34UV", DescriptorType.Vec4)
+            new Descriptor("block34UV", DescriptorType.Vec4),
+            new Descriptor("blockTypes", DescriptorType.Vec4)
         ))
     )
 
+    private val batchCount = 2
+    private var loadedBatches = 0
+
+    blockBatch.onLoad(_ => postBatchCreate())
+    depthBatch.onLoad(_ => postBatchCreate())
+
+    private val atlasCount = 4
+    private var loadedAtlases = 0
+
+    private var regenerateQueued = false
+
     ChunkRenderer.blockAtlas.onLoad(t =>
-        blockShader.setUniform("tex", new TextureUniform(TextureSlot.One, t))
+        blockShader.setUniform("tex", new TextureUniform(TextureSlot.One, t.renderTex))
+        postAtlasCreate()
     )
 
     ChunkRenderer.normalAtlas.onLoad(t =>
-        blockNormalShader.setUniform("tex", new TextureUniform(TextureSlot.One, t))
+        blockNormalShader.setUniform("tex", new TextureUniform(TextureSlot.One, t.renderTex))
+        postAtlasCreate()
     )
 
     ChunkRenderer.posAtlas.onLoad(t =>
-        blockPositionShader.setUniform("tex", new TextureUniform(TextureSlot.One, t))
+        blockPositionShader.setUniform("tex", new TextureUniform(TextureSlot.One, t.renderTex))
+        postAtlasCreate()
     )
 
     ChunkRenderer.depthAtlas.onLoad(t =>
-        blockDepthShader.setUniform("tex", new TextureUniform(TextureSlot.One, t))
+        blockDepthShader.setUniform("tex", new TextureUniform(TextureSlot.One, t.renderTex))
+        postAtlasCreate()
     )
 
-    def regenerateBatch(): Unit = {
-        if(blockAtlas.loaded && depthAtlas.loaded) {
+    private def postBatchCreate(): Unit = {
+        loadedBatches += 1
+    }
+
+    private def postAtlasCreate(): Unit = {
+        loadedAtlases += 1
+    }
+
+    private def allBatchesLoaded: Boolean = (loadedBatches == batchCount)
+    private def allAtlasesLoaded: Boolean = (loadedAtlases == atlasCount)
+
+    def queueRegeneration(): Unit =
+        regenerateQueued = true
+
+    def regenerateIfNeeded(): Unit = {
+        if(regenerateQueued && allAtlasesLoaded && allBatchesLoaded) {
             _regenerateBatch()
-            return
+            regenerateQueued = false
         }
-
-        blockAtlas.onLoad(_ => {
-            if(depthAtlas.loaded) {
-                _regenerateBatch()
-            }
-        })
-
-        depthAtlas.onLoad(_ => {
-            if(blockAtlas.loaded) {
-                _regenerateBatch()
-            }
-        })
     }
 
     private def _regenerateBatch(): Unit = {
@@ -205,10 +225,10 @@ class ChunkRenderer(private val chunkMap: ChunkMap) {
         blockBatch.render()
     }
 
-    def depthRedrawNeeded: Boolean = depthRedraw
+    def depthRedrawNeeded: Boolean = (depthRedraw && depthBatch.loaded)
 
     def renderDepth(): Unit = {
-        if(depthRedraw && depthAtlas.loaded && depthBatch.loaded && blockDepthShader.loaded) {
+        if(depthRedrawNeeded) {
             depthBatch.render()
             depthRedraw = false
         }
@@ -224,7 +244,8 @@ class BlockElement(
 
         ListUtil.of(
             new Vec3ElementData(pos.x, pos.y, pos.z),
-            new Vec2ElementData(atlas.u1, atlas.v1)
+            new Vec2ElementData(atlas.u1, atlas.v1),
+            new FloatElementData(blockType.ordinal)
         )
     }
 }
@@ -246,6 +267,10 @@ class DepthElement(
         blockTypes.forEach(t => {
             val atlas = ChunkRenderer.depthAtlas.infoFor(t.id)
             list.add(new Vec2ElementData(atlas.u1, atlas.v1))
+        })
+
+        blockTypes.forEach(t => {
+            list.add(new FloatElementData(t.ordinal))
         })
 
         list
@@ -300,7 +325,4 @@ object ChunkRenderer {
         atlasSize.x / blockPixelSize,
         atlasSize.y / blockPixelSize
     )
-
-    protected val depthShader = new Shader("chunk/block_depth")
-    depthShader.setUniform("blockSize", new FloatUniform(blockPixelSize))
 }

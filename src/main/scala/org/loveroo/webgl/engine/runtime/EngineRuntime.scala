@@ -10,10 +10,14 @@ import org.loveroo.webgl.engine.render.frame.command.GPUCommand
 import scala.Exception
 
 trait EngineRuntime {
-    def isDebug: Boolean = false
+    inline val verbose = false
+    inline val debug = true
+
+    def isVerbose: Boolean = verbose
+    def isDebug: Boolean = debug
 
     def crashOrLog(ex: Exception): Unit = {
-        if(isDebug) {
+        if(debug) {
             throw ex
         }
         else {
@@ -21,8 +25,14 @@ trait EngineRuntime {
         }
     }
 
-    def debugLog(msg: String): Unit = {
-        if(isDebug) {
+    inline def verboseLog(msg: String): Unit = {
+        inline if(verbose) {
+            log(msg)
+        }
+    }
+
+    inline def debugLog(msg: String): Unit = {
+        inline if(debug) {
             log(msg)
         }
     }

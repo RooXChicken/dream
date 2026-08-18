@@ -30,7 +30,7 @@ class World extends Scene {
         Camera.sizeY
     )
 
-    private val worldPositionBuffer = new RenderBuffer(
+    private val worldPosBuffer = new RenderBuffer(
         "world_position",
         Renderer.colorFormats.RGBA8F,
         Camera.sizeX,
@@ -45,7 +45,7 @@ class World extends Scene {
     )
 
     private val worldSprite = new Sprite(
-        worldBuffer,
+        worldBuffer.renderTex,
         new Shader("sprite_raw", "world/world_lighting")
     )
 
@@ -53,18 +53,19 @@ class World extends Scene {
         worldSprite.scale = worldSprite.scale.mul(2.0f)
     })
 
-    worldSprite.shader.setUniform("normalTex", new TextureUniform(TextureSlot.Two, worldNormalBuffer))
-    worldSprite.shader.setUniform("posTex", new TextureUniform(TextureSlot.Three, worldPositionBuffer))
+    worldNormalBuffer.renderTex.onLoad(t => worldSprite.shader.setUniform("normalTex", new TextureUniform(TextureSlot.Two, t)))
+    worldPosBuffer.renderTex.onLoad(t => worldSprite.shader.setUniform("posTex", new TextureUniform(TextureSlot.Three, t)))
+    worldDepthBuffer.renderTex.onLoad(t => worldSprite.shader.setUniform("depthTex", new TextureUniform(TextureSlot.Four, t)))
+
+    worldSprite.shader.setUniform("depthSize", new Uniform2f(ChunkMap.depthMapSize.x, ChunkMap.depthMapSize.y))
 
     private val chunkMap = new ChunkMap()
     chunkMap.init()
 
-    worldSprite.shader.setUniform("depthTex", new TextureUniform(TextureSlot.Four, worldDepthBuffer))
-    worldSprite.shader.setUniform("depthSize", new Uniform2f(ChunkMap.depthMapSize.x, ChunkMap.depthMapSize.y))
-
     private val entities = new HashMap[UUID, Entity]()
 
     private var _sunPos = new Vec3i()
+    var rendered = false
 
     def sunPos: Vec3i = _sunPos
     def sunPos_=(value: Vec3i): Unit = {
@@ -122,18 +123,13 @@ class World extends Scene {
     override def render(delta: Double): Unit = {
         Game.runtime.camera.lerp(delta)
 
-        if(chunkMap.redrawNeeded) {
-            Renderer.disableDepthTest()
-            worldDepthBuffer.bindBuffer()
-
-            chunkMap.renderDepth()
-        }
+        chunkMap.regenerateIfNeeded()
 
         Renderer.enableDepthTest()
         worldNormalBuffer.bindBuffer()
         chunkMap.renderNormals()
 
-        worldPositionBuffer.bindBuffer()
+        worldPosBuffer.bindBuffer()
         chunkMap.renderPositions()
 
         worldBuffer.bindBuffer()
@@ -141,9 +137,16 @@ class World extends Scene {
         chunkMap.renderWorld()
         entities.forEach((_, e) => e.render(delta))
 
+        Renderer.disableDepthTest()
+
+        if(chunkMap.depthRedrawNeeded) {
+            worldDepthBuffer.bindBuffer()
+
+            chunkMap.renderDepth()
+        }
+
         Renderer.unbindRenderBuffer()
 
-        Renderer.disableDepthTest()
         worldSprite.render(delta)
     }
 
