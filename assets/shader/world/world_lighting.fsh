@@ -25,7 +25,7 @@ bool isAffectedByLight(highp vec3 pos, highp vec3 normal, highp vec3 dir) {
     else {
         highp vec3 worldPos = pos;
 
-        for(mediump float i = 0.0; i < 1024.0; i += 1.0) {
+        for(mediump float i = 0.0; i < 256.0; i += 1.0) {
             worldPos += dir;
 
             if(isOutOfBounds(worldPos)) {
