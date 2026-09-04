@@ -1,23 +1,47 @@
 import org.scalajs.linker.interface.ModuleSplitStyle
 import org.scalajs.linker.interface.ModuleInitializer
 
-name := "webgl"
-scalaVersion := "3.8.3"
+lazy val importPredef = Seq(
+    scalacOptions ++= Seq(
+        "-Yimports:org.loveroo.predef.Predef"
+    ),
+)
 
 lazy val predef = project
+    .in(file("predef"))
+    .enablePlugins(ScalaJSPlugin)
 
-lazy val webgl = project.in(file("."))
+lazy val engine = project
+    .in(file("engine"))
     .dependsOn(predef)
+    .enablePlugins(ScalaJSPlugin)
+    .settings(importPredef)
+
+lazy val game = project
+    .in(file("game"))
+    .dependsOn(
+        predef,
+        engine
+    )
+    .enablePlugins(ScalaJSPlugin)
+    .settings(importPredef)
+
+lazy val impl = project
+    .in(file("impl"))
+    .dependsOn(
+        predef,
+        engine,
+        game
+    )
     .enablePlugins(ScalaJSPlugin, WebScalaJSBundlerPlugin)
     .settings(
-        scalacOptions ++= Seq(
-            "-Yimports:org.loveroo.predef.Predef"
-        ),
+        importPredef,
+        libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.8.1",
+        libraryDependencies += ("org.scala-js" %%% "scalajs-fake-insecure-java-securerandom" % "1.0.0").cross(CrossVersion.for3Use2_13),
         scalaJSLinkerConfig ~= {
             _.withModuleKind(ModuleKind.ESModule)
         },
-        libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.8.1",
         Compile / scalaJSModuleInitializers += {
-            ModuleInitializer.mainMethod("org.loveroo.webgl.Runtime", "main")
-        },
+            ModuleInitializer.mainMethod("org.loveroo.webgl.Dream", "main")
+        }
     )

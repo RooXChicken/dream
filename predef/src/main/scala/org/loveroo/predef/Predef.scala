@@ -17,7 +17,7 @@ object Predef {
     type Any = scala.Any
     type AnyVal = scala.AnyVal
     type AnyRef = scala.AnyRef
-    type Array = scala.Array
+    type Array[T] = scala.Array[T]
 
     type String = scala.Predef.String
     type Class[T] = scala.Predef.Class[T]
