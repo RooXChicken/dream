@@ -60,7 +60,7 @@ highp vec3 toWorldPos(highp vec3 blockPos) {
     mediump float quarterSize = blockPixelSize / 4.0;
 
     return vec3(
-        blockPos.x * halfSize + blockPos.z * halfSize,
+        (blockPos.x * halfSize) + (blockPos.z * halfSize),
         (blockPos.x * quarterSize) + (blockPos.y * halfSize) - ((blockPos.z - 7.0) * quarterSize),
         -blockPos.y - blockPos.z
     );

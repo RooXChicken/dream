@@ -13,6 +13,34 @@ uniform mediump float renderState;
 #include "block_util.glsl"
 #include "depth_util.glsl"
 
+bool isAffectedByLight(highp vec3 pos, highp vec3 normal, highp vec3 dir) {
+    highp vec3 dotNormal = normal;
+
+    dotNormal.x *= -1.0;
+
+    // if the normal is facing opposite of the light, zero chance of it being lit by it
+    if(dot((dir * -1.0), normalize(dotNormal)) > 0.0) {
+        return true;
+    }
+    else {
+        highp vec3 worldPos = pos;
+
+        for(mediump float i = 0.0; i < 1024.0; i += 1.0) {
+            worldPos += dir;
+
+            if(isOutOfBounds(worldPos)) {
+                return false;
+            }
+
+            if(isPosInBlock(worldPos, depthTex, depthSize)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 void main(void) {
     highp vec4 pixel = texture2D(tex, uv);
     if(pixel.a <= 0.0) {
@@ -85,27 +113,9 @@ void main(void) {
     }
 
     highp vec3 sunDir = normalize(sunPos);
-    highp vec3 dotNormal = normal;
 
-    dotNormal.x *= -1.0;
-
-    // if the normal is facing opposite of the light, zero chance of it being lit by it
-    if(dot((sunDir * -1.0), normalize(dotNormal)) > 0.0) {
+    if(isAffectedByLight(worldPos, normal, sunDir)) {
         pixel.rgb *= 0.5;
-    }
-    else {
-        for(mediump float i = 0.0; i < 1024.0; i += 1.0) {
-            worldPos += sunDir;
-
-            if(isOutOfBounds(worldPos)) {
-                break;
-            }
-
-            if(isPosInBlock(worldPos, depthTex, depthSize)) {
-                pixel.rgb *= 0.5;
-                break;
-            }
-        }
     }
 
     gl_FragColor = pixel;
