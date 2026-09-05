@@ -1,13 +1,14 @@
 package org.loveroo.webgl.game.entity.living
 
 import org.loveroo.webgl.Game
-import org.loveroo.webgl.engine.input.{Axis, Input}
+import org.loveroo.webgl.engine.input.{Axis, Button, Input}
 import org.loveroo.webgl.engine.math.{NumberMove, Vec2f, Vec3f}
 import org.loveroo.webgl.engine.render.shader.Shader
 import org.loveroo.webgl.engine.render.{ImageTexture, Sprite}
 import org.loveroo.webgl.engine.runtime.EngineRuntime.ER
 import org.loveroo.webgl.game.entity.{Entity, EntityType, SpriteEntity}
 import org.loveroo.webgl.game.scene.World
+import org.loveroo.webgl.game.world.BlockType
 
 import java.lang.Math
 
@@ -58,6 +59,10 @@ class DummyEntity(_pos: Vec3f, world: World) extends
 
     override def tick(): Unit = {
         super.tick()
+
+        if(ER.input.isButtonPressed(Input.buttons.dummy)) {
+            world.setBlockAt(BlockType.Brownie, pos.x.toInt, pos.y.toInt - 1, pos.z.toInt)
+        }
 
         val cameraPos = Entity.xyzToWorld(pos.x, pos.y, pos.z)
         ER.camera.pos = new Vec2f(cameraPos.x, cameraPos.y)

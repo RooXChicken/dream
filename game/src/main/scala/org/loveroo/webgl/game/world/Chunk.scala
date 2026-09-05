@@ -8,8 +8,6 @@ import org.loveroo.webgl.engine.render.shader.{Uniform, UniformFloatValue, Unifo
 import org.loveroo.webgl.engine.runtime.Renderer
 
 class Chunk(val chunkX: Int, val chunkZ: Int, generator: Generator) extends Destroyable {
-    // TODO: look into ensuring order is blocks closer first
-    // to optimize depth
     private val blocks = generator.generateBlocks(chunkX, chunkZ)
     private val blocksThatUpdate = new ArrayList[Vec3i]()
 
@@ -39,11 +37,12 @@ object Chunk {
     val chunkSizeY = 128
     val chunkSizeZ = 8
 
-    val chunkElementSize: Int = (chunkSizeX * chunkSizeY * chunkSizeZ)
-
     val maxDepthColumnPixelCount = 32
     val blocksPerDepthColumn: Int = (maxDepthColumnPixelCount / blockDepthPixelSize)
     val depthColumnsPerChunk: Int = (chunkSizeZ / blocksPerDepthColumn)
+
+    val chunkElementSize: Int = (chunkSizeX * chunkSizeY * chunkSizeZ)
+    val chunkDepthElementSize: Int = (chunkSizeX * chunkSizeY * depthColumnsPerChunk)
 
     Renderer.submitConstant("chunkXSize", new UniformFloatValue(Chunk.chunkSizeX))
     Renderer.submitConstant("chunkZSize", new UniformFloatValue(Chunk.chunkSizeZ))

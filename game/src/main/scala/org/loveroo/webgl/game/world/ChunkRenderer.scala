@@ -8,13 +8,13 @@ import org.loveroo.webgl.engine.render.batch.{Batch, BatchDescriptor, BatchEleme
 import org.loveroo.webgl.engine.render.data.TextureSlot
 import org.loveroo.webgl.engine.render.shader.{Shader, Uniform}
 import org.loveroo.webgl.engine.render.{AtlasID, TextureAtlas}
-import org.loveroo.webgl.game.world.Chunk.{blockDepthPixelSize, blockPixelSize}
+import org.loveroo.webgl.game.world.Chunk.{blockDepthPixelSize, blockPixelSize, chunkSizeX, chunkSizeZ}
 import org.loveroo.webgl.game.world.ChunkMap.distance
 
 import scala.RuntimeException
 
 class ChunkRenderer(private val chunkMap: ChunkMap) {
-    private var depthRedraw = false
+    private var redrawDepth = false
 
     val blockShader = new Shader("chunk/block")
     val blockNormalShader = new Shader("chunk/block")
@@ -86,6 +86,17 @@ class ChunkRenderer(private val chunkMap: ChunkMap) {
     private def allBatchesLoaded: Boolean = (loadedBatches == batchCount)
     private def allAtlasesLoaded: Boolean = (loadedAtlases == atlasCount)
 
+    private val chunkPosToIndex = new Array[Int](distance * distance)
+    private var chunkGenerationIndex = 0
+
+    {
+        var i = 0
+        while(i < chunkPosToIndex.length) {
+            chunkPosToIndex.update(i, -1)
+            i += 1
+        }
+    }
+
     def queueRegeneration(): Unit =
         regenerateQueued = true
 
@@ -107,6 +118,8 @@ class ChunkRenderer(private val chunkMap: ChunkMap) {
             (Chunk.chunkSizeX * Chunk.chunkSizeY * Chunk.depthColumnsPerChunk)
         )
 
+        chunkGenerationIndex = 0
+
         var x = 0
         while(x < distance) {
             var z = distance - 1
@@ -125,13 +138,16 @@ class ChunkRenderer(private val chunkMap: ChunkMap) {
         blockBatch.putBatch(blockElements)
         depthBatch.putBatch(depthElements)
 
-        depthRedraw = true
+        redrawDepth = true
     }
 
     private def submitChunk(chunk: Chunk, blockElements: List[BlockElement], depthElements: List[DepthElement]): Unit = {
         if(chunk == null) {
             return
         }
+
+        chunkPosToIndex.update((chunk.chunkX * distance) + chunk.chunkZ, chunkGenerationIndex)
+        chunkGenerationIndex += 1
 
         var x = 0
         while(x < Chunk.chunkSizeX) {
@@ -209,6 +225,54 @@ class ChunkRenderer(private val chunkMap: ChunkMap) {
         )
     }
 
+    def submitBlock(x: Int, y: Int, z: Int, blockType: BlockType): Unit = {
+        val chunkX = (x / Chunk.chunkSizeX)
+        val chunkZ = (z / Chunk.chunkSizeZ)
+
+        val blockX = x % Chunk.chunkSizeX
+        val blockY = y % Chunk.chunkSizeY
+        val blockZ = z % Chunk.chunkSizeZ
+
+        val chunkIndex = chunkPosToIndex((chunkX * distance) + chunkZ)
+
+        // monstrosity
+        val blockBatchIndex =
+            (chunkIndex * Chunk.chunkElementSize) +
+            (Chunk.chunkSizeY - blockY - 1) +
+            ((Chunk.chunkSizeZ - blockZ - 1) * Chunk.chunkSizeY) +
+            (blockX * Chunk.chunkSizeY * Chunk.chunkSizeZ)
+
+        val depthBatchIndex =
+            (chunkIndex * Chunk.chunkDepthElementSize) +
+            (blockZ / Chunk.blocksPerDepthColumn) +
+            (blockY * Chunk.depthColumnsPerChunk) +
+            (blockX * Chunk.chunkSizeY * Chunk.depthColumnsPerChunk)
+
+        blockBatch.putElement(
+            blockBatchIndex,
+            blockElementFor(
+                blockX,
+                blockY,
+                blockZ,
+                chunkX,
+                chunkZ
+            )
+        )
+
+        depthBatch.putElement(
+            depthBatchIndex,
+            depthElementFor(
+                blockX,
+                blockY,
+                blockZ / Chunk.blocksPerDepthColumn,
+                chunkX,
+                chunkZ
+            )
+        )
+
+        redrawDepth = true
+    }
+
     def renderWorld(): Unit = {
         blockBatch.shader = blockShader
         blockBatch.render()
@@ -224,12 +288,12 @@ class ChunkRenderer(private val chunkMap: ChunkMap) {
         blockBatch.render()
     }
 
-    def depthRedrawNeeded: Boolean = (depthRedraw && depthBatch.loaded)
+    def depthRedrawNeeded: Boolean = (redrawDepth && depthBatch.loaded)
 
     def renderDepth(): Unit = {
         if(depthRedrawNeeded) {
             depthBatch.render()
-            depthRedraw = false
+            redrawDepth = false
         }
     }
 }

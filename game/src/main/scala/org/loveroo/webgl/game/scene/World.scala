@@ -176,11 +176,11 @@ class World extends Scene {
     }
     
     def setBlockAt(blockType: BlockType, x: Int, y: Int, z: Int): Unit = {
-        chunkMap.chunkAtBlock(x, z) ?? (_.setBlockAt(
+        chunkMap.setBlockAt(
             blockType,
-            x % Chunk.chunkSizeX,
-            y % Chunk.chunkSizeY,
-            z % Chunk.chunkSizeZ
-        ))
+            x,
+            y,
+            z
+        )
     }
 }

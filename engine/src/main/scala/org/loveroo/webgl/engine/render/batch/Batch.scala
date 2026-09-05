@@ -50,6 +50,7 @@ class Batch[E <: BatchElement](
         buffer(() => {
             ER.submit(Command.PutBatchElement, w => {
                 w.string(id)
+                w.int(index)
 
                 element.data.forEach(_(w))
             })

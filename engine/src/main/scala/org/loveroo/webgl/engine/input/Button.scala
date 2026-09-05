@@ -9,6 +9,7 @@ abstract class Buttons {
     val moveRight: Button
 
     val jump: Button
+    val dummy: Button
 
     val debugMode: Button
     val debugShowNormal: Button

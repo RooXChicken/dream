@@ -59,7 +59,7 @@ object EngineRuntime {
     def ER: EngineRuntime = _engine
 
     inline final val verbose = false
-    inline final val debug = false
+    inline final val debug = true
 
     def isVerbose: Boolean = verbose
     def isDebug: Boolean = debug
@@ -82,6 +82,14 @@ object EngineRuntime {
     inline def debugLog(msg: String): Unit = {
         inline if(debug) {
             log(msg)
+        }
+    }
+
+    inline def assert(condition: Boolean, msg: String): Unit = {
+        inline if(debug) {
+            if(!condition) {
+                throw new Exception(s"Assertion failed ${msg}")
+            }
         }
     }
 

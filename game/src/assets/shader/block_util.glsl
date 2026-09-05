@@ -4,7 +4,7 @@
 
 #include "util.glsl"
 
-bool isOutOfBounds(highp vec3 pos) {
+bool isOutOfBounds(mediump vec3 pos) {
     return (
         pos.x < 0.0 ||
         pos.y < 0.0 ||
@@ -15,14 +15,14 @@ bool isOutOfBounds(highp vec3 pos) {
     );
 }
 
-highp vec4 posToPixel(highp vec3 worldPos) {
-    highp float blockX = floor(worldPos.x / 8.0);
-    highp float blockY = floor(worldPos.y / 8.0);
-    highp float blockZ = floor(worldPos.z / 8.0);
+highp vec4 posToPixel(mediump vec3 worldPos) {
+    mediump float blockX = floor(worldPos.x / 8.0);
+    mediump float blockY = floor(worldPos.y / 8.0);
+    mediump float blockZ = floor(worldPos.z / 8.0);
 
-    highp float blockOffsetX = mod(worldPos.x, 8.0);
-    highp float blockOffsetY = mod(worldPos.y, 8.0);
-    highp float blockOffsetZ = mod(worldPos.z, 8.0);
+    mediump float blockOffsetX = mod(worldPos.x, 8.0);
+    mediump float blockOffsetY = mod(worldPos.y, 8.0);
+    mediump float blockOffsetZ = mod(worldPos.z, 8.0);
 
     return vec4(
         (blockX + (floor(blockOffsetX / 4.0) * 128.0)) / 255.0,
@@ -32,16 +32,16 @@ highp vec4 posToPixel(highp vec3 worldPos) {
     );
 }
 
-highp vec3 pixelToPos(highp vec4 _pixel) {
-    highp vec4 pixel = ceil(_pixel * 255.0);
+highp vec3 pixelToPos(mediump vec4 _pixel) {
+    mediump vec4 pixel = ceil(_pixel * 255.0);
 
-    highp float blockX = floor(mod(pixel.r, 128.0));
-    highp float blockY = floor(pixel.g);
-    highp float blockZ = floor(mod(pixel.b, 64.0));
+    mediump float blockX = floor(mod(pixel.r, 128.0));
+    mediump float blockY = floor(pixel.g);
+    mediump float blockZ = floor(mod(pixel.b, 64.0));
 
-    highp float blockXOffset = (floor(pixel.r / 128.0) * 4.0) + floor(pixel.b / 64.0);
-    highp float blockYOffset = floor(pixel.a / 8.0);
-    highp float blockZOffset = floor(mod(pixel.a, 8.0));
+    mediump float blockXOffset = (floor(pixel.r / 128.0) * 4.0) + floor(pixel.b / 64.0);
+    mediump float blockYOffset = floor(pixel.a / 8.0);
+    mediump float blockZOffset = floor(mod(pixel.a, 8.0));
 
     return vec3(
         (blockX * 8.0) + blockXOffset,

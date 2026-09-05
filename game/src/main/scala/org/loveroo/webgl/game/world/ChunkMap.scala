@@ -74,6 +74,19 @@ class ChunkMap extends Destroyable {
         (x * distance) + z
     }
 
+    def setBlockAt(blockType: BlockType, x: Int, y: Int, z: Int): Unit = {
+        chunkAtBlock(x, z) ?? (c => {
+            c.setBlockAt(
+                blockType,
+                x % Chunk.chunkSizeX,
+                y % Chunk.chunkSizeY,
+                z % Chunk.chunkSizeZ
+            )
+
+            renderer.submitBlock(x, y, z, blockType)
+        })
+    }
+
     def isChunkValid(x: Int, z: Int): Boolean =
         (chunkAt(x, z) != null)
 

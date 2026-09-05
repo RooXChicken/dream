@@ -1,15 +1,15 @@
 #!/bin/bash
 set -e
 
-#echo "Ensure debug mode is off!" # i am a forgetful someone
-#sleep 3
-#
-#echo "Initializing..."
-#rm -rf dist/assets
-#rm -f dist/main.js
-#
-#echo "Compiling..."
-#sbt fullLinkJS
+echo "Ensure debug mode is off!" # i am a forgetful someone
+sleep 3
+
+echo "Initializing..."
+rm -rf dist/assets
+rm -f dist/main.js
+
+echo "Compiling..."
+sbt fullLinkJS
 
 echo "Minifying..."
 

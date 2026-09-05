@@ -159,7 +159,7 @@ object Entity {
         new Vec3f(
             blockPos.x,
             blockPos.y + 32,
-            -y - z
+            -y - z - 1.0f
         )
     }
 }

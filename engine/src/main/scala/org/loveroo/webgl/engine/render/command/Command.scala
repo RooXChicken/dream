@@ -12,7 +12,6 @@ trait Command extends EnumEntry {
     def execute(reader: DataReader, renderer: Renderer): Unit
 }
 
-//@JSExportTopLevel(name = "Command", moduleID = "render")
 object Command extends Enum[Command] {
     val DepthTest: Entry = register("depth_test", new DepthTestCommand())
 

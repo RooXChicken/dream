@@ -10,6 +10,7 @@ import org.loveroo.webgl.engine.render.data.*
 import org.loveroo.webgl.engine.render.shader.{ShaderCompilationFailureException, ShaderLinkFailureException, Uniform}
 import org.loveroo.webgl.engine.render.{RenderBufferCreateException, Renderer}
 import org.loveroo.webgl.engine.runtime.EngineRuntime
+import org.loveroo.webgl.engine.runtime.EngineRuntime.assert
 import org.loveroo.webgl.{Dream, Game}
 import org.scalajs.dom
 import org.scalajs.dom.webgl.extensions.WebGLVertexArrayObjectOES
@@ -167,6 +168,8 @@ class WebGLRenderer(
         hasData: Boolean,
         data: Either[String, (Int, Int)]
     ): Unit = {
+        assert(hasData.evaluate(data.isLeft, data.isRight), "invalid parameters")
+
         data.evaluate(
             data => {
                 val img = new Image()

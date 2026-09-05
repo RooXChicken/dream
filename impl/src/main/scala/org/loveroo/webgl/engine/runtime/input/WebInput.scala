@@ -69,6 +69,7 @@ class WebButtons extends Buttons {
     override val moveRight: Button = new Button(KeyCode.D)
 
     override val jump: Button = new Button(KeyCode.Space)
+    override val dummy: Button = new Button(KeyCode.E)
 
     override val debugMode: Button = new Button(KeyCode.F3)
     override val debugShowNormal: Button = new Button(KeyCode.N)
