@@ -40,4 +40,34 @@ object ElementData {
             _w.float(w)
         }
     }
+
+    def ubyte(value: Byte): ElementData = {
+        w => {
+            w.byte(value)
+        }
+    }
+
+    def vec2ub(x: Byte, y: Byte): ElementData = {
+        w => {
+            w.byte(x)
+            w.byte(y)
+        }
+    }
+
+    def vec3ub(x: Byte, y: Byte, z: Byte): ElementData = {
+        w => {
+            w.byte(x)
+            w.byte(y)
+            w.byte(z)
+        }
+    }
+
+    def vec4ub(x: Byte, y: Byte, z: Byte, w: Byte): ElementData = {
+        _w => {
+            _w.byte(x)
+            _w.byte(y)
+            _w.byte(z)
+            _w.byte(w)
+        }
+    }
 }

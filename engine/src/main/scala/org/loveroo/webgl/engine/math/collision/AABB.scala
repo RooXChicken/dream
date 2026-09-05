@@ -78,10 +78,10 @@ trait AABB {
 
     private def resolveAxis(vel: Float, min: Float, max: Float, otherMin: Float, otherMax: Float): Float = {
         if(vel > 0.0f && max <= otherMin) {
-            Math.min(vel, otherMin - max).toFloat
+            Math.min(vel, otherMin - max)
         }
         else if(vel < 0.0f && min >= otherMax) {
-            Math.max(vel, otherMax - min).toFloat
+            Math.max(vel, otherMax - min)
         }
         else {
             vel

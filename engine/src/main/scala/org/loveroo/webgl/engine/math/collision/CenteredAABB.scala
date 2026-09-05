@@ -28,8 +28,8 @@ class CenteredAABB(
 
     override def grow(x: Float, y: Float, z: Float): AABB = {
         sizeX += x
-        sizeY += x
-        sizeZ += x
+        sizeY += y
+        sizeZ += z
 
         this
     }

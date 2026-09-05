@@ -108,7 +108,7 @@ class WebGLRenderer(
 
         rendering = true
 
-        dom.window.requestAnimationFrame(_ => {
+//        dom.window.requestAnimationFrame(_ => {
             while(reader.index < reader.size) {
                 val byte = reader.byte()
                 val command = Command.fromOrdinal(byte)
@@ -138,7 +138,7 @@ class WebGLRenderer(
                 prepareNextFrame()
                 render(_queue)
             }
-        })
+//        })
     }
 
     override def enableDepthTest(): Unit = {
@@ -484,11 +484,11 @@ class WebGLRenderer(
     override def createBatch(id: String, shaderId: String, reader: DataReader): Unit = {
         val descriptorSize = reader.short()
         val descriptorEntryCount = reader.byte()
-        val entries = new util.ArrayList[(String, Byte)](descriptorEntryCount)
+        val entries = new util.ArrayList[(String, Byte, Boolean)](descriptorEntryCount)
 
         var i = 0
         while(i < descriptorEntryCount) {
-            entries.add((reader.string(), reader.byte()))
+            entries.add((reader.string(), reader.byte(), reader.boolean()))
             i += 1
         }
 
@@ -559,6 +559,7 @@ class WebGLRenderer(
 
             val valueType = descriptorType.dataType match {
                 case DescriptorDataType.Float => WebGLRenderingContext.FLOAT
+                case DescriptorDataType.UByte => WebGLRenderingContext.UNSIGNED_BYTE
                 case _ => 0
             }
 
@@ -574,7 +575,7 @@ class WebGLRenderer(
                     index,
                     descriptorType.count,
                     valueType,
-                    false,
+                    e._3,
                     descriptorSize,
                     offset
                 )

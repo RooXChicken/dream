@@ -26,21 +26,22 @@ class ChunkRenderer(private val chunkMap: ChunkMap) {
         "chunk_map_blocks",
         blockShader,
         new BatchDescriptor(ListUtil.of(
-            new Descriptor("blockPos", DescriptorType.Vec3),
-            new Descriptor("blockUV", DescriptorType.Vec2),
-            new Descriptor("blockType", DescriptorType.Float)
+            new Descriptor("blockPos", DescriptorType.Vec3UB),
+            new Descriptor("blockType", DescriptorType.UByte),
+            new Descriptor("blockUV", DescriptorType.Vec2UB, true)
         ))
     )
 
+    // TODO: optimize data
     private val depthBatch = new Batch[DepthElement](
         "chunk_map_depth",
         blockDepthShader,
         new BatchDescriptor(ListUtil.of(
-            new Descriptor("blockPos", DescriptorType.Vec2),
+            new Descriptor("blockPos", DescriptorType.Vec2f),
             new Descriptor("zIndex", DescriptorType.Float),
-            new Descriptor("block12UV", DescriptorType.Vec4),
-            new Descriptor("block34UV", DescriptorType.Vec4),
-            new Descriptor("blockTypes", DescriptorType.Vec4)
+            new Descriptor("block12UV", DescriptorType.Vec4f),
+            new Descriptor("block34UV", DescriptorType.Vec4f),
+            new Descriptor("blockTypes", DescriptorType.Vec4f)
         ))
     )
 
@@ -306,9 +307,10 @@ class BlockElement(
         val atlas = ChunkRenderer.blockAtlas.infoFor(blockType.id)
 
         ListUtil.of(
-            ElementData.vec3(pos.x, pos.y, pos.z),
-            ElementData.vec2(atlas.u1, atlas.v1),
-            ElementData.float(blockType.ordinal)
+            ElementData.vec3ub(pos.x.toByte, pos.y.toByte, pos.z.toByte),
+            ElementData.ubyte(blockType.ordinal.toByte),
+            // TODO: why is u 256 and v 255
+            ElementData.vec2ub((atlas.u1 * 256.0f).toByte, (atlas.v1 * 255.0f).toByte)
         )
     }
 }

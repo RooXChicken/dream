@@ -2,10 +2,10 @@ package org.loveroo.webgl.game.entity
 
 import java.util.{LinkedList, List, UUID}
 import org.loveroo.webgl.engine.render.Renderable
-import org.loveroo.webgl.engine.math.{Lerp, NumberMove, Vec2f, Vec3f}
+import org.loveroo.webgl.engine.math.{Lerp, NumberMove, Vec2f, Vec3f, Vec3i}
 import org.loveroo.webgl.engine.math.collision.CenteredAABB
 import org.loveroo.webgl.game.scene.World
-import org.loveroo.webgl.game.world.{BlockState, Chunk}
+import org.loveroo.webgl.game.world.{BlockState, BlockType, Chunk, ChunkMap}
 
 import java.lang.Math
 
@@ -34,6 +34,8 @@ trait Entity(
 
     def tick(): Unit = {
         move()
+        pos.clamp(Entity.borderMin, Entity.borderMax)
+
         previousPos.set(pos)
 
         if(solid) {
@@ -103,13 +105,13 @@ trait Entity(
             offset.z
         )
 
-        val xMin = Math.floor(hitbox.minX)
-        val yMin = Math.floor(hitbox.minY)
-        val zMin = Math.floor(hitbox.minZ)
+        val xMin = Math.floor(hitbox.minX).toInt
+        val yMin = Math.floor(hitbox.minY).toInt
+        val zMin = Math.floor(hitbox.minZ).toInt
 
-        val xMax = Math.ceil(hitbox.maxX)
-        val yMax = Math.ceil(hitbox.maxY)
-        val zMax = Math.ceil(hitbox.maxZ)
+        val xMax = Math.ceil(hitbox.maxX).toInt
+        val yMax = Math.ceil(hitbox.maxY).toInt
+        val zMax = Math.ceil(hitbox.maxZ).toInt
 
         var x = xMin
         while(x < xMax) {
@@ -117,7 +119,11 @@ trait Entity(
             while(y < yMax) {
                 var z = zMin
                 while(z < zMax) {
-                    world.getBlockState(x.toInt, y.toInt, z.toInt) ?? _collectedBlocks.add
+                    _collectedBlocks.add(
+                        world.getBlockState(x, y, z) ?
+                        new BlockState(BlockType.Barrier, new Vec3i(x, y, z))
+                    )
+
                     z += 1
                 }
 
@@ -153,6 +159,13 @@ trait Entity(
 }
 
 object Entity {
+    private val borderMin = new Vec3f(0.0f, 0.0f, 0.0f)
+    private val borderMax = new Vec3f(
+        ChunkMap.distance * Chunk.chunkSizeX,
+        Chunk.chunkSizeY,
+        ChunkMap.distance * Chunk.chunkSizeZ
+    )
+
     def xyzToWorld(x: Float, y: Float, z: Float): Vec3f = {
         val blockPos = Chunk.xyzToWorld(x, y, z)
 

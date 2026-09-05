@@ -42,9 +42,9 @@ class TextureAtlas(
                 id.id,
                 new AtlasInfo(
                     posX / atlasSize.x,
-                    ((posY - elementSize.y) / atlasSize.y),
+                    (posY - elementSize.y) / atlasSize.y,
                     (posX + elementSize.x) / atlasSize.x,
-                    ((posY) / atlasSize.y)
+                    (posY / atlasSize.y)
                 )
             )
 

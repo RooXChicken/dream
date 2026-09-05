@@ -97,6 +97,7 @@ class BatchDescriptor(val types: List[Descriptor]) {
         types.forEach(t => {
             writer.string(t.id)
             writer.byte(t.descriptorType.ordinal.toByte)
+            writer.boolean(t.normalized)
         })
     }
 }
@@ -105,9 +106,14 @@ class DescriptorDataType private extends EnumEntry
 
 object DescriptorDataType extends Enum[DescriptorDataType] {
     val Float: Entry = register("float", new DescriptorDataType())
+    val UByte: Entry = register("ubyte", new DescriptorDataType())
 }
 
-class Descriptor(val id: String, val descriptorType: DescriptorType)
+class Descriptor(
+    val id: String,
+    val descriptorType: DescriptorType,
+    val normalized: Boolean = false
+)
 
 class DescriptorType private (
     val size: Byte,
@@ -117,9 +123,14 @@ class DescriptorType private (
 
 object DescriptorType extends Enum[DescriptorType] {
     val Float: Entry = register("float", new DescriptorType(4, 1, DescriptorDataType.Float))
-    val Vec2: Entry = register("vec2", new DescriptorType(8, 2, DescriptorDataType.Float))
-    val Vec3: Entry = register("vec3", new DescriptorType(12, 3, DescriptorDataType.Float))
-    val Vec4: Entry = register("vec4", new DescriptorType(16, 4, DescriptorDataType.Float))
+    val Vec2f: Entry = register("vec2f", new DescriptorType(8, 2, DescriptorDataType.Float))
+    val Vec3f: Entry = register("vec3f", new DescriptorType(12, 3, DescriptorDataType.Float))
+    val Vec4f: Entry = register("vec4f", new DescriptorType(16, 4, DescriptorDataType.Float))
+
+    val UByte: Entry = register("float", new DescriptorType(1, 1, DescriptorDataType.UByte))
+    val Vec2UB: Entry = register("vec2ub", new DescriptorType(2, 2, DescriptorDataType.UByte))
+    val Vec3UB: Entry = register("vec3ub", new DescriptorType(3, 3, DescriptorDataType.UByte))
+    val Vec4UB: Entry = register("vec4ub", new DescriptorType(4, 4, DescriptorDataType.UByte))
 }
 
 class AttributeNotFoundException(id: String, attrib: String) extends

@@ -54,6 +54,8 @@ trait Vec3[N, V <: Vec3[N, ?]] {
 
     def set(other: V): V
 
+    def clamp(min: V, max: V): V
+
     protected def name: String
     override def toString: String = s"${name} (${x}, ${y}, ${z})"
 }
@@ -108,6 +110,31 @@ class Vec3i(
         x = other.x
         y = other.y
         z = other.z
+
+        this
+    }
+
+    override def clamp(min: Vec3i, max: Vec3i): Vec3i = {
+        if(x < min.x) {
+            x = min.x
+        }
+        if(x > max.x) {
+            x = max.x
+        }
+
+        if(y < min.y) {
+            y = min.y
+        }
+        if(y > max.y) {
+            y = max.y
+        }
+
+        if(z < min.z) {
+            z = min.z
+        }
+        if(z > max.z) {
+            z = max.z
+        }
 
         this
     }
@@ -171,6 +198,31 @@ class Vec3f(
         x = other.x
         y = other.y
         z = other.z
+
+        this
+    }
+
+    override def clamp(min: Vec3f, max: Vec3f): Vec3f = {
+        if(x < min.x) {
+            x = min.x
+        }
+        if(x > max.x) {
+            x = max.x
+        }
+
+        if(y < min.y) {
+            y = min.y
+        }
+        if(y > max.y) {
+            y = max.y
+        }
+
+        if(z < min.z) {
+            z = min.z
+        }
+        if(z > max.z) {
+            z = max.z
+        }
 
         this
     }
