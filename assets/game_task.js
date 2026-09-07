@@ -1,4 +1,4 @@
-import { GameTask, MessageTransfer } from "game.js"
+import { GameTask, MessageTransfer } from "/game.js"
 
 let data = new MessageTransfer()
 GameTask.initGame()

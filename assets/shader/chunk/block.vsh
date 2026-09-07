@@ -1,8 +1,8 @@
 attribute vec2 vertexUV;
 
 attribute vec3 blockPos;
-attribute vec2 blockUV;
 attribute float blockType;
+attribute vec2 blockUV;
 
 uniform vec4 camera;
 

@@ -5,7 +5,7 @@ uniform sampler2D normalTex;
 uniform sampler2D posTex;
 
 uniform sampler2D depthTex;
-uniform highp vec2 depthSize;
+uniform mediump vec2 depthSize;
 
 uniform mediump vec3 sunPos;
 uniform mediump float renderState;
@@ -13,8 +13,8 @@ uniform mediump float renderState;
 #include "block_util.glsl"
 #include "depth_util.glsl"
 
-bool isAffectedByLight(highp vec3 pos, highp vec3 normal, highp vec3 dir) {
-    highp vec3 dotNormal = normal;
+bool isAffectedByLight(mediump vec3 pos, mediump vec3 normal, mediump vec3 dir) {
+    mediump vec3 dotNormal = normal;
 
     dotNormal.x *= -1.0;
 
@@ -23,9 +23,9 @@ bool isAffectedByLight(highp vec3 pos, highp vec3 normal, highp vec3 dir) {
         return true;
     }
     else {
-        highp vec3 worldPos = pos;
+        mediump vec3 worldPos = pos;
 
-        for(mediump float i = 0.0; i < 256.0; i += 1.0) {
+        for(mediump float i = 0.0; i < 1024.0; i += 1.0) {
             worldPos += dir;
 
             if(isOutOfBounds(worldPos)) {
@@ -42,27 +42,27 @@ bool isAffectedByLight(highp vec3 pos, highp vec3 normal, highp vec3 dir) {
 }
 
 void main(void) {
-    highp vec4 pixel = texture2D(tex, uv);
+    mediump vec4 pixel = texture2D(tex, uv);
     if(pixel.a <= 0.0) {
         gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
         return;
     }
 
-    highp vec4 posPixel = texture2D(posTex, uv);
+    mediump vec4 posPixel = texture2D(posTex, uv);
     if(renderState == 2.0) {
         gl_FragColor = posPixel;
         return;
     }
 
-    highp vec3 worldPos = pixelToPos(posPixel);
-    highp vec4 _normal = texture2D(normalTex, uv);
-    highp vec3 normal = floor(ceil(_normal.rgb * 255.0) / 16.0);
+    mediump vec3 worldPos = pixelToPos(posPixel);
+    mediump vec4 _normal = texture2D(normalTex, uv);
+    mediump vec3 normal = floor(ceil(_normal.rgb * 255.0) / 16.0);
 
     // make the start position not inside the block
-    highp float edgeCheck = mod(ceil(_normal.g * 255.0), 16.0);
+    lowp float edgeCheck = mod(ceil(_normal.g * 255.0), 16.0);
 
     if(edgeCheck > 0.0) {
-        highp vec3 blockCheckPos = worldPos;
+        mediump vec3 blockCheckPos = worldPos;
 
         blockCheckPos.x += normal.r;
         blockCheckPos.z -= normal.b;
@@ -70,14 +70,6 @@ void main(void) {
         if(isOutOfBounds(blockCheckPos) || !isPosInBlock(blockCheckPos, depthTex, depthSize)) {
             pixel.rgb *= 0.9;
         }
-//        else {
-//            blockCheckPos.x -= normal.r * 2.0;
-//            blockCheckPos.z += normal.b * 2.0;
-//
-//            if(isOutOfBounds(blockCheckPos) || !isPosInBlock(blockCheckPos, depthTex, depthSize)) {
-//                pixel.rgb *= 0.9;
-//            }
-//        }
 
         normal.g = ceil((ceil(_normal.g * 255.0) - edgeCheck) / 16.0);
 
@@ -88,7 +80,7 @@ void main(void) {
         else {
             normal.g = 0.0;
 
-            highp float oldR = normal.r;
+            mediump float oldR = normal.r;
             normal.r = normal.b;
             normal.b = oldR;
         }
@@ -112,7 +104,7 @@ void main(void) {
         return;
     }
 
-    highp vec3 sunDir = normalize(sunPos);
+    mediump vec3 sunDir = normalize(sunPos);
 
     if(isAffectedByLight(worldPos, normal, sunDir)) {
         pixel.rgb *= 0.5;
