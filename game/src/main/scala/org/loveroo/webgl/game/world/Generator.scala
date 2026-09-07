@@ -41,7 +41,10 @@ class TestGenerator extends Generator {
                     BlockType.Grass
                 }
                 else {
-                    BlockType.Air
+                    (ER.noise.noise(x + height, z - height) < 0.7f).evaluate(
+                        BlockType.Air,
+                        BlockType.Rose
+                    )
                 }
 
                 blocks.set(index, blockType)

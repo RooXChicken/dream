@@ -108,7 +108,7 @@ class WebGLRenderer(
 
         rendering = true
 
-//        dom.window.requestAnimationFrame(_ => {
+        dom.window.requestAnimationFrame(_ => {
             while(reader.index < reader.size) {
                 val byte = reader.byte()
                 val command = Command.fromOrdinal(byte)
@@ -138,7 +138,7 @@ class WebGLRenderer(
                 prepareNextFrame()
                 render(_queue)
             }
-//        })
+        })
     }
 
     override def enableDepthTest(): Unit = {

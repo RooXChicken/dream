@@ -18,6 +18,9 @@ trait Entity(
     val vel = new Vec3f()
     val hitbox = new CenteredAABB(() => pos, 0.8f)
 
+    private var _isGrounded = false
+    def isGrounded: Boolean = _isGrounded
+
     private val _collectedBlocks = new LinkedList[BlockState]()
 
     private var _uuid: UUID = null
@@ -40,6 +43,7 @@ trait Entity(
 
         if(solid) {
             val movement = vel.clone()
+            _isGrounded = false
 
             val blocks = collectBlocks()
             blocks.forEach(b => {
@@ -64,6 +68,10 @@ trait Entity(
                 vel.x = 0.0f
             }
             if(movement.y != vel.y) {
+                if(vel.y < 0.0f) {
+                    _isGrounded = true
+                }
+
                 vel.y = 0.0f
             }
             if(movement.z != vel.z) {

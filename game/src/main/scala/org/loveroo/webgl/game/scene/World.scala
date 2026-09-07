@@ -17,6 +17,13 @@ import org.loveroo.webgl.game.world.{BlockState, BlockType, Chunk, ChunkMap}
 import java.lang.Math
 
 class World extends Scene {
+    private val frameBuffer = new RenderBuffer(
+        "framebuffer",
+        Renderer.colorFormats.RGBA8F,
+        Camera.sizeX,
+        Camera.sizeY
+    )
+
     private val worldBuffer = new RenderBuffer(
         "world",
         Renderer.colorFormats.RGBA8F,
@@ -50,8 +57,13 @@ class World extends Scene {
         new Shader("sprite_raw", "world/world_lighting")
     )
 
-    worldSprite.onLoad(_ => {
-        worldSprite.scale = worldSprite.scale.mul(2.0f)
+    private val framebufferSprite = new Sprite(
+        frameBuffer.renderTex,
+        new Shader("sprite_raw", "sprite")
+    )
+
+    framebufferSprite.onLoad(_ => {
+        framebufferSprite.scale = framebufferSprite.scale.mul(2.0f)
     })
 
     worldNormalBuffer.renderTex.onLoad(t => worldSprite.shader.setUniform("normalTex", Uniform.texture(TextureSlot.Two, t)))
@@ -146,9 +158,11 @@ class World extends Scene {
             chunkMap.renderDepth()
         }
 
-        Renderer.unbindRenderBuffer()
+        frameBuffer.bindBuffer(false)
+        worldSprite.render(0.0)
 
-        worldSprite.render(delta)
+        Renderer.unbindRenderBuffer()
+        framebufferSprite.render(0.0)
     }
 
     def spawnEntity(entity: Entity): UUID = {

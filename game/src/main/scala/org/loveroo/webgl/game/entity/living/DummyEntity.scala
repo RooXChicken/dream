@@ -50,7 +50,7 @@ class DummyEntity(_pos: Vec3f, world: World) extends
             (Math.abs(movement.y) > 0.0).evaluate(acceleration, deceleration)
         )
 
-        if(vel.y == 0.0f && ER.input.isButtonPressed(Input.buttons.jump)) {
+        if(isGrounded && ER.input.isButtonPressed(Input.buttons.jump)) {
             vel.y = jumpHeight
         }
 
@@ -68,8 +68,8 @@ class DummyEntity(_pos: Vec3f, world: World) extends
         ER.camera.pos = new Vec2f(cameraPos.x, cameraPos.y)
     }
 
-    def acceleration: Float = (0.8f / 60.0f)
-    def topSpeed: Float = (8.0f / 60.0f)
+    def acceleration: Float = (0.4f / 60.0f)
+    def topSpeed: Float = (4.0f / 60.0f)
 
-    def jumpHeight: Float = 0.2f
+    def jumpHeight: Float = 0.18f
 }

@@ -52,4 +52,5 @@ object BlockType {
     val Smiles = new BlockType("smiles", 0.6f)
     val Lantern = new BlockType("lantern", 0.4f)
     val Barrier = new BlockType("barrier", 1.0f, true, true, true)
+    val Rose = new BlockType("rose", 0.0f, true, true, true)
 }
