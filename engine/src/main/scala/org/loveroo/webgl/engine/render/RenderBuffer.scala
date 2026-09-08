@@ -3,6 +3,7 @@ package org.loveroo.webgl.engine.render
 import org.loveroo.webgl.engine.data.resource.Resource
 import org.loveroo.webgl.engine.render.command.Command
 import org.loveroo.webgl.engine.render.data.ColorFormat
+import org.loveroo.webgl.engine.render.texture.{EmptyTexture, Texture}
 import org.loveroo.webgl.engine.runtime.EngineRuntime.ER
 import org.loveroo.webgl.engine.runtime.Renderer
 

@@ -42,6 +42,11 @@ object Dream {
 
         gameTask = new WebGameTask(msg => {
             msg.message match {
+                case GameTask.gameInit => {
+                    gameTask.postInit()
+                    gameTask.tick(inputEvents.writeChanges())
+                }
+
                 case GameTask.framePrepared => {
                     val buff = msg.buffer
 
@@ -49,6 +54,8 @@ object Dream {
                         gameTask.tick(inputEvents.writeChanges())
                     }
                 }
+
+                case _ => {}
             }
         })
 
@@ -59,6 +66,5 @@ object Dream {
         )
 
         gameTask.init()
-        gameTask.tick(inputEvents.writeChanges())
     }
 }

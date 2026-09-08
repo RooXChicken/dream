@@ -1,4 +1,4 @@
-package org.loveroo.webgl.engine.render
+package org.loveroo.webgl.engine.render.texture
 
 import org.loveroo.webgl.engine.data.DataWriter
 import org.loveroo.webgl.engine.render.data.{ColorFormat, TextureType}
@@ -26,10 +26,6 @@ class EmptyTexture(
 
     override protected def fillData(writer: DataWriter): Unit = {
         super.fillData(writer)
-
         writer.boolean(false)
-
-        writer.int(width)
-        writer.int(height)
     }
 }

@@ -44,5 +44,4 @@ class WebEngineRuntime extends EngineRuntime {
         () => new Uint8DataWriter()
 
     override def randomUUID(): UUID = UUID.randomUUID()
-    EngineRuntime._engine = this
 }

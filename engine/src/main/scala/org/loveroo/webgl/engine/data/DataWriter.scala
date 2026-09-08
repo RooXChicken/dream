@@ -11,6 +11,7 @@ trait DataWriter {
 
     def byte(value: Byte): Unit
     def bytes(value: Array[Byte]): Unit
+    def bytes(value: Array[Short]): Unit
 
     def short(value: Short): Unit
     def int(value: Int): Unit

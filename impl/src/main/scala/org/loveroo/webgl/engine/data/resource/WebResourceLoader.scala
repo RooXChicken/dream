@@ -1,24 +1,22 @@
 package org.loveroo.webgl.engine.data.resource
 
-import org.loveroo.webgl.engine.render.ImageTextureResult
+import org.loveroo.webgl.engine.render.texture.ImageTextureResult
 import org.loveroo.webgl.engine.runtime.EngineRuntime
 import org.scalajs.dom.{Blob, DedicatedWorkerGlobalScope, HttpMethod, ImageBitmap, RequestCache, RequestInit, Response, URL}
 
-import scala.Exception
+import scala.{Exception, StringBuilder}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.scalajs.js.typedarray.Uint8Array
+import scala.scalajs.js.typedarray.{ArrayBuffer, Uint8Array}
 import scala.util.Try
 
 class WebResourceLoader extends ResourceLoader {
-    override type RawData = Uint8Array
-    override type Image = org.scalajs.dom.Image
+    override type RawData = ArrayBuffer
 
     protected override def load(path: String, onLoad: OnLoad[RawData]): Unit = {
-        blob(path)
+        fetch(path)
             .flatMap(_.arrayBuffer().toFuture)
-            .map(a => new Uint8Array(a))
             .onComplete(t => handleTry(t, onLoad))
     }
 
@@ -53,23 +51,13 @@ class WebResourceLoader extends ResourceLoader {
         blob(path).flatMap(_.text().toFuture).onComplete(b => handleTry(b, onLoad))
     }
 
-    def loadImage(id: String, onLoad: OnLoad[ImageTextureResult]): Unit = {
-        loadBlob(ResourceLoader.texturePath(id), blob => {
-            val data = URL.createObjectURL(blob)
-            val imgFuture = DedicatedWorkerGlobalScope.self.createImageBitmap(blob).toFuture
+    def loadImage(id: String, onLoad: OnLoad[Array[Short]]): Unit = {
+        load(ResourceLoader.texturePath(id), new OnLoad[ArrayBuffer] {
+            override def onSuccess(value: ArrayBuffer): Unit = {
+                onLoad.onSuccess(new Uint8Array(value).toSeq.toArray)
+            }
 
-            imgFuture.onComplete(b => handleTry(b, new OnLoad[ImageBitmap] {
-                override def onSuccess(value: ImageBitmap): Unit = {1
-                    onLoad.onSuccess(new ImageTextureResult(
-                        value.width.toInt,
-                        value.height.toInt,
-                        data
-                    ))
-                }
-
-                override def onFail(error: String): Unit =
-                    onLoad.onFail(error)
-            }))
+            override def onFail(error: String): Unit = onLoad.onFail(error)
         })
     }
 

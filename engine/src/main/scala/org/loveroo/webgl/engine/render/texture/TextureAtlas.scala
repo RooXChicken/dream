@@ -1,8 +1,8 @@
-package org.loveroo.webgl.engine.render
+package org.loveroo.webgl.engine.render.texture
 
 import org.loveroo.webgl.engine.math.{Vec2i, Vec3f}
+import org.loveroo.webgl.engine.render.RenderBuffer
 import org.loveroo.webgl.engine.render.shader.Shader
-import org.loveroo.webgl.engine.runtime.EngineRuntime.ER
 import org.loveroo.webgl.engine.runtime.{EngineRuntime, Renderer}
 
 import java.util.{HashMap, List, Map}
@@ -56,7 +56,7 @@ class TextureAtlas(
         var loaded = 0
 
         elements.forEach(id => {
-            val image = new ImageTexture(s"${path}/${id.file}")
+            val image = new ImageTexture(s"${path}/${id.file}", elementSize.x, elementSize.y)
             textures.put(id.id, image)
 
             image.onLoad(i => {

@@ -59,7 +59,7 @@ class Uint8DataReader(val buffer: Uint8Array, _size: Int = -1) extends DataReade
         new java.lang.String(bytes())
     }
 
-    def subReader(length: Int): DataReader = {
+    override def subReader(length: Int): DataReader = {
         if(length == 0) {
             new Uint8DataReader(new Uint8Array(0), 0)
         }

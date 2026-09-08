@@ -4,7 +4,7 @@ import org.loveroo.webgl.Game
 import org.loveroo.webgl.engine.input.{Axis, Button, Input}
 import org.loveroo.webgl.engine.math.{NumberMove, Vec2f, Vec3f}
 import org.loveroo.webgl.engine.render.shader.Shader
-import org.loveroo.webgl.engine.render.{ImageTexture, Sprite}
+import org.loveroo.webgl.engine.render.texture.{ImageTexture, Sprite}
 import org.loveroo.webgl.engine.runtime.EngineRuntime.ER
 import org.loveroo.webgl.game.entity.{Entity, EntityType, SpriteEntity}
 import org.loveroo.webgl.game.scene.World
@@ -17,7 +17,7 @@ class DummyEntity(_pos: Vec3f, world: World) extends
     Entity(EntityType.Dummy, _pos, world)
 {
     override protected val _sprite: Sprite = new Sprite(
-        new ImageTexture("hitbox"),
+        new ImageTexture("hitbox", 4, 4),
         new Shader("sprite")
     )
 

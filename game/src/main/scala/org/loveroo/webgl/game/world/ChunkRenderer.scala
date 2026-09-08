@@ -7,7 +7,7 @@ import org.loveroo.webgl.engine.render.batch
 import org.loveroo.webgl.engine.render.batch.{Batch, BatchDescriptor, BatchElement, Descriptor, DescriptorType, ElementData}
 import org.loveroo.webgl.engine.render.data.TextureSlot
 import org.loveroo.webgl.engine.render.shader.{Shader, Uniform}
-import org.loveroo.webgl.engine.render.{AtlasID, TextureAtlas}
+import org.loveroo.webgl.engine.render.texture.{AtlasID, TextureAtlas}
 import org.loveroo.webgl.game.world.Chunk.{blockDepthPixelSize, blockPixelSize, chunkSizeX, chunkSizeZ}
 import org.loveroo.webgl.game.world.ChunkMap.distance
 

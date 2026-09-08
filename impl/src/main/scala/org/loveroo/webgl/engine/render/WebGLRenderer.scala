@@ -18,9 +18,12 @@ import org.scalajs.dom.webgl.*
 import org.scalajs.dom.*
 
 import java.util
-import scala.RuntimeException
+import scala.collection.immutable.ArraySeq
+import scala.scalajs.concurrent.JSExecutionContext
+import scala.{RuntimeException, Seq}
 import scala.scalajs.js
-import scala.scalajs.js.typedarray.{Float32Array, Uint8Array}
+import scala.scalajs.js.JSConverters.JSRichIterableOnce
+import scala.scalajs.js.typedarray.{ArrayBuffer, Float32Array, Uint8Array, Uint8ClampedArray}
 
 class WebGLRenderer(
     val gl: WebGLRenderingContext,
@@ -165,33 +168,13 @@ class WebGLRenderer(
         format: Int,
         dataType: Int,
         textureType: Int,
+        width: Int,
+        height: Int,
         hasData: Boolean,
-        data: Either[String, (Int, Int)]
+        @Null data: DataReader
     ): Unit = {
-        assert(hasData.evaluate(data.isLeft, data.isRight), "invalid parameters")
+        assert((hasData == (data != null)), "invalid parameters for createTexture")
 
-        data.evaluate(
-            data => {
-                val img = new Image()
-                img.onload = _ => {
-                    _createTexture(id, internalFormat, format, dataType, textureType, true, Either.left(img))
-                }
-
-                img.src = data
-            },
-            size => _createTexture(id, internalFormat, format, dataType, textureType, false, Either.right(size))
-        )
-    }
-
-    def _createTexture(
-        id: String,
-        internalFormat: Int,
-        format: Int,
-        dataType: Int,
-        textureType: Int,
-        hasData: Boolean,
-        data: Either[Image, (Int, Int)]
-    ): Unit = {
         if(textures.contains(id)) {
             return
         }
@@ -226,21 +209,30 @@ class WebGLRenderer(
         )
 
         if(hasData) {
-            gl.pixelStorei(WebGLRenderingContext.UNPACK_FLIP_Y_WEBGL, 1)
+            val img = new Image()
 
-            gl.texImage2D(
-                textureType,
-                0,
-                internalFormat,
-                format,
-                dataType,
-                data.left
+            img.onload = _ => {
+                gl.pixelStorei(WebGLRenderingContext.UNPACK_FLIP_Y_WEBGL, 1)
+
+                gl.texImage2D(
+                    textureType,
+                    0,
+                    internalFormat,
+                    format,
+                    dataType,
+                    img
+                )
+            }
+
+            val blob = new Blob(
+                js.Array(data.as[Uint8DataReader].buffer),
+                new BlobPropertyBag { `type` = "image/png" }
             )
+
+            val url = URL.createObjectURL(blob)
+            img.src = url
         }
         else {
-            val width = data.right._1
-            val height = data.right._2
-
             gl.texImage2D(
                 textureType,
                 0,
@@ -272,6 +264,7 @@ class WebGLRenderer(
     override def bindTexture(slot: Int, id: String): Unit = {
         val tex = textures.get(id)
         if(tex == null || boundTextures.get(slot) == id) {
+            EngineRuntime.verboseLog(s"${id} is ${tex} and bound (${boundTextures.get(slot) == id})")
             return
         }
 
@@ -645,6 +638,7 @@ class WebGLRenderer(
             return
         }
 
+        println(s"rendering ${id} with fb ${boundFramebuffer} with tex 0 of ${boundTextures.get(0)}")
         vaoExt.bindVertexArrayOES(ptr.vao)
 
         instanceExt.drawElementsInstancedANGLE(

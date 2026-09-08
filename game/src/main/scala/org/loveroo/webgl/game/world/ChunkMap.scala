@@ -3,7 +3,7 @@ package org.loveroo.webgl.game.world
 import java.util.{ArrayList, List}
 import org.loveroo.webgl.engine.data.resource.Destroyable
 import org.loveroo.webgl.engine.math.Vec2i
-import org.loveroo.webgl.engine.render.Texture
+import org.loveroo.webgl.engine.render.texture.Texture
 import org.loveroo.webgl.game.world.ChunkMap.distance
 import scala.collection.mutable.{ArrayBuffer, Buffer, ListBuffer}
 

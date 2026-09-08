@@ -9,6 +9,7 @@ import org.loveroo.webgl.engine.runtime.input.WebInput
 import org.scalajs.dom.*
 
 import scala.scalajs.js
+import scala.scalajs.js.Object
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 import scala.scalajs.js.typedarray.{ArrayBuffer, Uint8Array}
 
@@ -27,12 +28,19 @@ class WebGameTask(private val messageHandler: MessageTransfer => Unit) extends G
             }
         )
 
-        scratchMsg.message = s"data.message = \"${GameTask.framePrepared}\""
-        worker.postMessage(scratchMsg)
-
         worker.addEventListener[MessageEvent]("message", m => {
             messageHandler(m.data.as[MessageTransfer])
         })
+
+        scratchMsg.message = s"data.message = \"${GameTask.gameInit}\""
+        worker.postMessage(scratchMsg)
+        scratchMsg.message = s"GameTask.initGame(() => { postMessage(data) })"
+        worker.postMessage(scratchMsg)
+    }
+
+    override def postInit(): Unit = {
+        scratchMsg.message = s"data.message = \"${GameTask.framePrepared}\""
+        worker.postMessage(scratchMsg)
     }
 
     override def tick(input: DataWriter): Unit = {
@@ -63,9 +71,15 @@ object WebGameTask {
     private var game: Game = null
 
     @JSExport
-    def initGame(): Unit = {
+    def initGame(postInit: js.Function): Unit = {
         if(game == null) {
-            game = new Game(new WebEngineRuntime())
+            val runtime = new WebEngineRuntime()
+            runtime.newFrame()
+
+            runtime.postInit(_ => {
+                game = new Game(runtime)
+                postInit.call(null)
+            })
         }
     }
 

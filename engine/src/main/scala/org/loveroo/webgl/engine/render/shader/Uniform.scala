@@ -1,8 +1,8 @@
 package org.loveroo.webgl.engine.render.shader
 
 import org.loveroo.webgl.engine.data.DataWriter
-import org.loveroo.webgl.engine.render.Texture
 import org.loveroo.webgl.engine.render.data.TextureSlot
+import org.loveroo.webgl.engine.render.texture.Texture
 
 type Uniform = DataWriter => Unit
 

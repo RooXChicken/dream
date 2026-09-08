@@ -3,9 +3,10 @@ package org.loveroo.webgl.engine.render.command
 import org.loveroo.predef.Either
 
 import java.util.List
-import org.loveroo.webgl.engine.render.{Renderer, Texture}
+import org.loveroo.webgl.engine.render.Renderer
 import org.loveroo.webgl.engine.render.data.{ColorFormat, ColorFormats, TextureSlot}
 import org.loveroo.webgl.engine.data.DataReader
+import org.loveroo.webgl.engine.render.texture.Texture
 
 class CreateTextureCommand extends Command {
     override def execute(reader: DataReader, renderer: Renderer): Unit = {
@@ -17,11 +18,14 @@ class CreateTextureCommand extends Command {
 
         val textureType = reader.int()
 
+        val width = reader.int()
+        val height = reader.int()
+
         val hasData = reader.boolean()
 
         val data = hasData.evaluate(
-            Either.left(reader.string()),
-            Either.right((reader.int(), reader.int()))
+            reader.subReader(reader.int()),
+            null
         )
 
         renderer.createTexture(
@@ -30,6 +34,8 @@ class CreateTextureCommand extends Command {
             format,
             dataType,
             textureType,
+            width,
+            height,
             hasData,
             data
         )

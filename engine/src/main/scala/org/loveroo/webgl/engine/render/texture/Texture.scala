@@ -1,10 +1,9 @@
-package org.loveroo.webgl.engine.render
+package org.loveroo.webgl.engine.render.texture
 
 import org.loveroo.webgl.engine.data.DataWriter
 import org.loveroo.webgl.engine.data.resource.Resource
 import org.loveroo.webgl.engine.render.command.Command
 import org.loveroo.webgl.engine.render.data.{ColorFormat, TextureSlot, TextureType}
-
 import org.loveroo.webgl.engine.runtime.EngineRuntime.ER
 
 abstract class Texture(
@@ -35,6 +34,9 @@ abstract class Texture(
         writer.int(colorFormat.dataType)
 
         writer.int(textureType.id)
+
+        writer.int(width)
+        writer.int(height)
     }
 
     override def destroy(): Unit = {

@@ -7,6 +7,7 @@ import org.loveroo.webgl.engine.math.{Vec3f, Vec3i}
 import org.loveroo.webgl.engine.render.*
 import org.loveroo.webgl.engine.render.data.TextureSlot
 import org.loveroo.webgl.engine.render.shader.{Shader, Uniform}
+import org.loveroo.webgl.engine.render.texture.{Sprite, Texture}
 import org.loveroo.webgl.engine.runtime.EngineRuntime.ER
 import org.loveroo.webgl.engine.runtime.Renderer
 import org.loveroo.webgl.game.Scene
@@ -59,6 +60,11 @@ class World extends Scene {
 
     private val framebufferSprite = new Sprite(
         frameBuffer.renderTex,
+        new Shader("sprite_raw", "sprite")
+    )
+
+    val testText = new Sprite(
+        ER.font.renderText("HELLO WORLD"),
         new Shader("sprite_raw", "sprite")
     )
 
@@ -160,6 +166,8 @@ class World extends Scene {
 
         frameBuffer.bindBuffer(false)
         worldSprite.render(0.0)
+
+        testText.render(delta)
 
         Renderer.unbindRenderBuffer()
         framebufferSprite.render(0.0)

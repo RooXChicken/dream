@@ -1,4 +1,4 @@
-package org.loveroo.webgl.engine.render
+package org.loveroo.webgl.engine.render.texture
 
 import org.loveroo.predef.ListUtil
 import org.loveroo.webgl.engine.math.{Vec2f, Vec3f}
@@ -18,9 +18,9 @@ class Sprite(
     shader,
     new BatchDescriptor(ListUtil.of())
 ) {
-    def this(id: String) = {
+    def this(id: String, width: Int, height: Int) = {
         this(
-            new ImageTexture(id),
+            new ImageTexture(id, width, height),
             new Shader(id)
         )
     }

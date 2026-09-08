@@ -53,6 +53,15 @@ class Uint8DataWriter(initialSize: Int = 1024) extends DataWriter {
         postWrite(value.length)
     }
 
+    override def bytes(value: Array[Short]): Unit = {
+        ensureSize(4 + value.length)
+
+        int(value.length)
+        buffer.set(ArraySeq.unsafeWrapArray(value).toJSArray, index)
+
+        postWrite(value.length)
+    }
+
     def bytes(value: Uint8Array): Unit = {
         ensureSize(4 + value.length)
 

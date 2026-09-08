@@ -22,8 +22,10 @@ trait Renderer {
         format: Int,
         dataType: Int,
         textureType: Int,
+        width: Int,
+        height: Int,
         hasData: Boolean,
-        data: Either[String, (Int, Int)]
+        @Null data: DataReader
     ): Unit
 
     def destroyTexture(id: String): Unit

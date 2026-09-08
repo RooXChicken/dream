@@ -1,19 +1,18 @@
 package org.loveroo.webgl.engine.data.resource
 
-import org.loveroo.webgl.engine.render.ImageTextureResult
+import org.loveroo.webgl.engine.render.texture.ImageTextureResult
 import org.loveroo.webgl.engine.runtime.EngineRuntime
 import org.loveroo.webgl.engine.runtime.EngineRuntime.ER
 
 trait ResourceLoader {
     type RawData
-    type Image
 
     protected def load(path: String, onLoad: OnLoad[RawData]): Unit
 
     def loadStr(path: String, onLoad: OnLoad[String]): Unit
     def loadRawAsString(path: String, onLoad: OnLoad[String]): Unit
 
-    def loadImage(path: String, onLoad: OnLoad[ImageTextureResult]): Unit
+    def loadImage(path: String, onLoad: OnLoad[Array[Short]]): Unit
 }
 
 object ResourceLoader {
