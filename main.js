@@ -1,1 +1,1 @@
-"use strict";import*as a from"./internal-829d2a2a108360a12abe6376bac2819e98f20503.js";var r;function e(){a.$m_Lorg_loveroo_webgl_Dream$().vg()}e();
+"use strict";import*as a from"./internal-829d2a2a108360a12abe6376bac2819e98f20503.js";var r;function e(){a.$m_Lorg_loveroo_webgl_Dream$().vP()}e();
