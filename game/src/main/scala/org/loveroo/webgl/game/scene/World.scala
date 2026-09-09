@@ -9,7 +9,7 @@ import org.loveroo.webgl.engine.render.data.TextureSlot
 import org.loveroo.webgl.engine.render.shader.{Shader, Uniform}
 import org.loveroo.webgl.engine.render.texture.{Sprite, Texture}
 import org.loveroo.webgl.engine.runtime.EngineRuntime.ER
-import org.loveroo.webgl.engine.runtime.Renderer
+import org.loveroo.webgl.engine.runtime.{EngineRuntime, Renderer}
 import org.loveroo.webgl.game.Scene
 import org.loveroo.webgl.game.entity.Entity
 import org.loveroo.webgl.game.entity.living.DummyEntity
@@ -63,12 +63,12 @@ class World extends Scene {
         new Shader("sprite_raw", "sprite")
     )
 
-    val testText = new Sprite(
-        ER.font.renderText("hello world!!! :3"),
+    val versionText = new Sprite(
+        ER.font.renderText(EngineRuntime.debugVersionString),
         new Shader("sprite_raw", "sprite")
     )
 
-    testText.pos = new Vec3f(10, 10)
+    versionText.pos = new Vec3f(2, 2)
 
     framebufferSprite.onLoad(_ => {
         framebufferSprite.scale = framebufferSprite.scale.mul(2.0f)
@@ -172,7 +172,9 @@ class World extends Scene {
         Renderer.unbindRenderBuffer()
         framebufferSprite.render(0.0)
 
-        testText.render(delta)
+        if(!EngineRuntime.debug) {
+            versionText.render(delta)
+        }
     }
 
     def spawnEntity(entity: Entity): UUID = {

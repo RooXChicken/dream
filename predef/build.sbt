@@ -1,2 +1,2 @@
 name := "predef"
-scalaVersion := "3.8.3"
+scalaVersion := "3.3.8"
