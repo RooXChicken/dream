@@ -25,7 +25,7 @@ class Font(
 
     private val batch = new Batch[GlyphElement](
         s"font_${id}",
-        new Shader("font", "sprite"),
+        new Shader("font"),
         new BatchDescriptor(ListUtil.of(
             new Descriptor("glyphPos", DescriptorType.Vec2f),
             new Descriptor("glyphUV", DescriptorType.Vec2f),
@@ -33,15 +33,14 @@ class Font(
         ))
     )
 
-    batch.onLoad(_ => {
-        atlas.onLoad(_ => {
-            batch.shader.setUniform("tex", Uniform.texture(TextureSlot.One, atlas))
-            create()
-        })
+    atlas.onLoad(_ => {
+        batch.shader.setUniform("tex", Uniform.texture(TextureSlot.One, atlas))
+        batch.shader.setUniform("atlasSize", Uniform.vec2(atlas.width, atlas.height))
+        batch.onLoad(_ => create())
     })
 
     override protected def create(): Unit = {
-        glyphs.calculateUV(atlas.width, maxGlyphWidth, maxGlyphHeight)
+        glyphs.calculateUV(atlas.width, atlas.height, maxGlyphWidth, maxGlyphHeight)
         postCreate()
     }
 
@@ -54,26 +53,35 @@ class Font(
         var width = 0
         var height = maxGlyphHeight
 
+        var x = 0
+        var y = maxGlyphHeight
+
         val chars = new util.ArrayList[GlyphElement](text.length)
 
         // calculate size
         loopChars(text, c => {
             val glyph = glyphs.glyphFor(c)
-            width += glyph.width
 
-            if(width > maxLength) {
-                height += maxGlyphHeight * (width / maxLength)
-                width = width % maxLength
+            // a i a
+            val xInc = glyph.width + 1
+            width += xInc
+
+            if(x >= maxLength) {
+                val yInc = maxGlyphHeight * (width / maxLength)
+                width = maxLength
+                height += yInc
+                y += yInc
+
+                x = 0
             }
 
-            val x = width
-            val y = height - maxGlyphHeight
-
             chars.add(new GlyphElement(
-                new Vec2f(x + glyph.offsetX, y + glyph.offsetY),
+                new Vec2f(x, y),
                 glyph.uv,
-                new Vec2f(glyph.width, glyph.height)
+                new Vec2f(maxGlyphWidth, maxGlyphHeight)
             ))
+
+            x += xInc
         })
 
         batch.putBatch(chars)
@@ -109,8 +117,8 @@ class Font(
 
 class GlyphElement(pos: Vec2f, uv: Vec2f, size: Vec2f) extends BatchElement {
     override val data: util.List[_ <: ElementData] = ListUtil.of(
-        ElementData.vec2(pos.x, pos.y),
-        ElementData.vec2(uv.x, uv.y),
-        ElementData.vec2(size.x, size.y),
+        ElementData.vec2f(pos.x, pos.y),
+        ElementData.vec2f(uv.x, uv.y),
+        ElementData.vec2f(size.x.toByte, size.y.toByte),
     )
 }

@@ -209,28 +209,19 @@ class WebGLRenderer(
         )
 
         if(hasData) {
-            val img = new Image()
+            gl.pixelStorei(WebGLRenderingContext.UNPACK_FLIP_Y_WEBGL, 1)
 
-            img.onload = _ => {
-                gl.pixelStorei(WebGLRenderingContext.UNPACK_FLIP_Y_WEBGL, 1)
-
-                gl.texImage2D(
-                    textureType,
-                    0,
-                    internalFormat,
-                    format,
-                    dataType,
-                    img
-                )
-            }
-
-            val blob = new Blob(
-                js.Array(data.as[Uint8DataReader].buffer),
-                new BlobPropertyBag { `type` = "image/png" }
+            gl.texImage2D(
+                textureType,
+                0,
+                internalFormat,
+                width,
+                height,
+                0,
+                format,
+                dataType,
+                data.as[Uint8DataReader].buffer
             )
-
-            val url = URL.createObjectURL(blob)
-            img.src = url
         }
         else {
             gl.texImage2D(
@@ -638,7 +629,6 @@ class WebGLRenderer(
             return
         }
 
-        println(s"rendering ${id} with fb ${boundFramebuffer} with tex 0 of ${boundTextures.get(0)}")
         vaoExt.bindVertexArrayOES(ptr.vao)
 
         instanceExt.drawElementsInstancedANGLE(
@@ -648,6 +638,8 @@ class WebGLRenderer(
             0,
             ptr.count
         )
+
+        EngineRuntime.verboseLog(s"Rendered batch ${id}")
     }
 
     override def createRenderBuffer(id: String, renderTexId: String, depthTexId: String, width: Int, height: Int): Unit = {

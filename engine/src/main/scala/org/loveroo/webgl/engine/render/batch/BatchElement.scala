@@ -17,14 +17,14 @@ object ElementData {
         }
     }
 
-    def vec2(x: Float, y: Float): ElementData = {
+    def vec2f(x: Float, y: Float): ElementData = {
         w => {
             w.float(x)
             w.float(y)
         }
     }
 
-    def vec3(x: Float, y: Float, z: Float): ElementData = {
+    def vec3f(x: Float, y: Float, z: Float): ElementData = {
         w => {
             w.float(x)
             w.float(y)
@@ -32,7 +32,7 @@ object ElementData {
         }
     }
 
-    def vec4(x: Float, y: Float, z: Float, w: Float): ElementData = {
+    def vec4f(x: Float, y: Float, z: Float, w: Float): ElementData = {
         _w => {
             _w.float(x)
             _w.float(y)

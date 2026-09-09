@@ -64,9 +64,11 @@ class World extends Scene {
     )
 
     val testText = new Sprite(
-        ER.font.renderText("HELLO WORLD"),
+        ER.font.renderText("hello world!!! :3"),
         new Shader("sprite_raw", "sprite")
     )
+
+    testText.pos = new Vec3f(10, 10)
 
     framebufferSprite.onLoad(_ => {
         framebufferSprite.scale = framebufferSprite.scale.mul(2.0f)
@@ -167,10 +169,10 @@ class World extends Scene {
         frameBuffer.bindBuffer(false)
         worldSprite.render(0.0)
 
-        testText.render(delta)
-
         Renderer.unbindRenderBuffer()
         framebufferSprite.render(0.0)
+
+        testText.render(delta)
     }
 
     def spawnEntity(entity: Entity): UUID = {

@@ -54,7 +54,7 @@ class WebResourceLoader extends ResourceLoader {
     def loadImage(id: String, onLoad: OnLoad[Array[Short]]): Unit = {
         load(ResourceLoader.texturePath(id), new OnLoad[ArrayBuffer] {
             override def onSuccess(value: ArrayBuffer): Unit = {
-                onLoad.onSuccess(new Uint8Array(value).toSeq.toArray)
+                onLoad.onSuccess(UPNG.decode(value).data.toSeq.toArray)
             }
 
             override def onFail(error: String): Unit = onLoad.onFail(error)

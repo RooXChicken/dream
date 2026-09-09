@@ -326,12 +326,12 @@ class DepthElement(
         }
 
         val list = new ArrayList[ElementData](blockTypes.size() + 2)
-        list.add(ElementData.vec2(pos.x, pos.y))
+        list.add(ElementData.vec2f(pos.x, pos.y))
         list.add(ElementData.float(zIndex))
 
         blockTypes.forEach(t => {
             val atlas = ChunkRenderer.depthAtlas.infoFor(t.id)
-            list.add(ElementData.vec2(atlas.u1, atlas.v1))
+            list.add(ElementData.vec2f(atlas.u1, atlas.v1))
         })
 
         blockTypes.forEach(t => {

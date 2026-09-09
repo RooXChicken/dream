@@ -19,12 +19,18 @@ class GlyphManager {
 
     def calculateUV(
         atlasWidth: Int,
+        atlasHeight: Int,
         maxGlyphWidth: Int,
         maxGlyphHeight: Int
     ): Unit = {
+        val rowCount = atlasWidth / maxGlyphWidth
+
         glyphs.forEach((_, g) => {
-            g.uv.x = (g.index * maxGlyphWidth) % atlasWidth
-            g.uv.y = (g.index / maxGlyphWidth) * maxGlyphHeight
+            val posX = ((g.index % rowCount) * maxGlyphWidth - g.offsetX).toFloat
+            val posY = (atlasHeight - ((g.index / rowCount) * maxGlyphHeight - g.offsetY)).toFloat
+
+            g.uv.x = posX / atlasWidth
+            g.uv.y = (posY - maxGlyphHeight) / atlasHeight
         })
     }
 
