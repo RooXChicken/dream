@@ -39,7 +39,7 @@ trait Entity(
         move()
         pos.clamp(Entity.borderMin, Entity.borderMax)
 
-        previousPos.set(pos)
+        setPreviousPos()
 
         if(solid) {
             val movement = vel.clone()
@@ -83,6 +83,10 @@ trait Entity(
         }
     }
 
+    protected def setPreviousPos(): Unit = {
+        previousPos.set(pos)
+    }
+
     def move(): Unit = {
         vel.x = NumberMove.moveTowardCapped(
             vel.x,
@@ -102,6 +106,7 @@ trait Entity(
     def gravity: Float = 0.01f
     def deceleration: Float = (2.0f / 60.0f)
     def solid: Boolean = true
+    var visible: Boolean = true
 
     def doesCollision: Boolean = true
 
@@ -153,13 +158,17 @@ trait Entity(
     }
 
     override def render(delta: Double): Unit = {
-        val blend = blendPos(delta)
-        renderEntity(blend)
+        if(visible) {
+            val blend = blendPos(delta)
+            renderEntity(blend)
+        }
     }
 
     def renderShadow(delta: Double): Unit = {
-        val blend = blendPos(delta)
-        renderEntityShadow(blend)
+        if(visible) {
+            val blend = blendPos(delta)
+            renderEntityShadow(blend)
+        }
     }
 
     protected def renderEntity(blend: Vec3f): Unit

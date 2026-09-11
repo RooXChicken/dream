@@ -10,9 +10,10 @@ import java.util
 
 class Sprite(
     val texture: Texture,
-    shader: Shader,
+    shader: Shader = new Shader("sprite"),
     private val _pos: Vec3f = new Vec3f(),
-    private val _scale: Vec2f = new Vec2f(1.0f, 1.0f)
+    private val _scale: Vec2f = new Vec2f(1.0f, 1.0f),
+    private val _offset: Vec3f = new Vec3f()
 ) extends Batch[BatchElement](
     texture.id,
     shader,
@@ -33,6 +34,12 @@ class Sprite(
         updatePos()
     }
 
+    def offset: Vec3f = _offset
+    def offset_=(value: Vec3f): Unit = {
+        _offset.set(value)
+        updatePos()
+    }
+
     def scale: Vec2f = _scale
     def scale_=(value: Vec2f): Unit = {
         _scale.set(value)
@@ -40,7 +47,7 @@ class Sprite(
     }
 
     private def updatePos(): Unit = {
-        shader.setUniform("pos", Uniform.vec3(pos.x, pos.y, pos.z))
+        shader.setUniform("pos", Uniform.vec3(pos.x + offset.x, pos.y + offset.y, pos.z + offset.z))
     }
 
     private def updateScale(): Unit = {

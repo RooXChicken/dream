@@ -198,7 +198,7 @@ object EngineRuntime {
     def ER: EngineRuntime = _engine
 
     inline final val verbose = false
-    inline final val debug = false
+    inline final val debug = true
 
     val name = "dream"
     val version = "v0.0.1a"

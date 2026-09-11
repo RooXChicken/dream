@@ -11,7 +11,7 @@ import org.loveroo.webgl.engine.render.texture.{Sprite, Texture}
 import org.loveroo.webgl.engine.runtime.EngineRuntime.ER
 import org.loveroo.webgl.engine.runtime.{EngineRuntime, Renderer}
 import org.loveroo.webgl.game.Scene
-import org.loveroo.webgl.game.entity.Entity
+import org.loveroo.webgl.game.entity.{Entity, Selector}
 import org.loveroo.webgl.game.entity.living.DummyEntity
 import org.loveroo.webgl.game.world.{BlockState, BlockType, Chunk, ChunkMap}
 
@@ -104,8 +104,13 @@ class World extends Scene {
     override def init(): Unit = {
         super.init()
 
-//        spawnEntity(new BlockOutline(this))
-        spawnEntity(new DummyEntity(new Vec3f(32, 120, 32), this))
+        val playerId = spawnEntity(new DummyEntity(new Vec3f(32, 120, 32), this))
+        spawnEntity(new Selector(playerId, this))
+    }
+
+    @Null
+    def getEntity(id: UUID): Entity = {
+        entities.get(id)
     }
 
     override protected def tick(): Unit = {

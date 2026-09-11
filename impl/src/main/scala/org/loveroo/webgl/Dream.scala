@@ -1,13 +1,14 @@
 package org.loveroo.webgl
 
 import org.loveroo.webgl.engine.data.Uint8DataReader
-import org.loveroo.webgl.engine.render.WebGLRenderer
+import org.loveroo.webgl.engine.render.{Camera, WebGLRenderer}
 import org.loveroo.webgl.engine.data.DataReader
 import org.loveroo.webgl.engine.runtime.input.WebInputEvents
 import org.loveroo.webgl.engine.runtime.{EngineRuntime, GameTask, WebEngineRuntime, WebGameTask}
 import org.scalajs.dom
 import org.scalajs.dom.{HTMLCanvasElement, WebGLRenderingContext}
 
+import java.lang.Math
 import scala.scalajs.js
 import scala.scalajs.js.Date
 import scala.scalajs.js.typedarray.Uint8Array
@@ -59,11 +60,21 @@ object Dream {
             }
         })
 
+        val canvas = document.getElementById("gl_canvas").as[HTMLCanvasElement]
+
         renderer = new WebGLRenderer(
-            document.getElementById("gl_canvas").as[HTMLCanvasElement]
-                .getContext("webgl").as[WebGLRenderingContext],
+            canvas.getContext("webgl").as[WebGLRenderingContext],
             () => gameTask.tick(inputEvents.writeChanges())
         )
+
+        canvas.onmousemove = event => {
+            val bounds = canvas.getBoundingClientRect()
+
+            val mouseX = ((event.clientX - bounds.left) / bounds.width).toFloat
+            val mouseY = ((event.clientY - bounds.top) / bounds.height).toFloat
+
+            inputEvents.mouseEvent(mouseX, mouseY)
+        }
 
         gameTask.init()
     }

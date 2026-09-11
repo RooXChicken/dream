@@ -63,6 +63,17 @@ object Chunk {
         Chunk.chunkSizeZ * ChunkMap.distance * Chunk.blockDepthPixelSize
     ))
 
+    def isInBounds(x: Int, y: Int, z: Int): Boolean = {
+        (
+            x >= 0 &&
+            x < chunkSizeX * ChunkMap.distance &&
+            y >= 0 &&
+            y < chunkSizeY &&
+            z >= 0 &&
+            z < chunkSizeZ * ChunkMap.distance
+        )
+    }
+
     def xyzToIndex(x: Int, y: Int, z: Int): Int = {
         ((x % chunkSizeX) * chunkSizeY * chunkSizeZ) + ((y % chunkSizeY) * chunkSizeZ) + (z % chunkSizeZ)
     }
@@ -72,7 +83,7 @@ object Chunk {
         val quarterSize = blockPixelSize / 4.0f
 
         new Vec2f(
-            x * halfSize + z * halfSize,
+            (x * halfSize) + (z * halfSize),
             (x * quarterSize) + (y * halfSize) - (z * quarterSize)
         )
     }

@@ -7,8 +7,11 @@ abstract class Buttons {
     val moveDown: Button
     val moveLeft: Button
     val moveRight: Button
-
     val jump: Button
+
+    val attack: Button
+    val use: Button
+
     val dummy: Button
 
     val debugMode: Button

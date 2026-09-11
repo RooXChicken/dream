@@ -15,6 +15,6 @@ object EntityType {
     }
 
     val Dummy = new EntityType("dummy")
-    val BlockOutline = new EntityType("block_outline")
+    val Selector = new EntityType("selector")
     val Player = new EntityType("player")
 }

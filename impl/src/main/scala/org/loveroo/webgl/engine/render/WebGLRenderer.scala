@@ -76,8 +76,8 @@ class WebGLRenderer(
     private var boundFramebuffer = ""
     private var activeTextureSlot = -1
 
-    private def canvasWidth: Int = gl.drawingBufferWidth
-    private def canvasHeight: Int = gl.drawingBufferHeight
+    def canvasWidth: Int = gl.drawingBufferWidth
+    def canvasHeight: Int = gl.drawingBufferHeight
 
     private var currentViewportWidth = 0
     private var currentViewportHeight = 0
